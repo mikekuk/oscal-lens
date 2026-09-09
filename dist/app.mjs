@@ -1,39 +1,245 @@
-import {readDocuments, documentPath} from './imports.mjs';
-import {model,flatten,makeValidator,preview} from './engine.mjs';
-const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));let docs=[],current=0,tab='controls',group='',validate;let previewCache=new WeakMap();
-const metadata=title=>({title,'last-modified':'2026-09-08T00:00:00Z',version:'1.0','oscal-version':'1.0.4',remarks:'An illustrative example, not an official NIST baseline.'});
-const control=(id,title,prose,extra={})=>({id,title,parts:[{id:id+'_smt',name:'statement',prose}],...extra});
-const exampleCatalog={catalog:{uuid:'1562cb25-7d8d-4bf4-b391-a7a31e6f1261',metadata:metadata('Example security catalogue'),groups:[{id:'ac',title:'Access control',parts:[{name:'overview',prose:'Limit access to authorised people and processes. This group-level guidance remains useful even when a profile selects only some controls.'}],groups:[{id:'ac-policy',title:'Policy & governance',controls:[control('ac-1','Policy and procedures','Develop, document and review access control policy.',{params:[{id:'ac-1_prm',label:'review frequency',values:['annually']}],props:[{name:'label',value:'AC-1'}],parts:[{name:'statement',prose:'Review policy {{ insert: param, ac-1_prm }}.'},{name:'guidance',prose:'Align access policy with the organisation’s business needs and responsibilities.'}]})]}],controls:[control('ac-2','Account management','Define and manage account types, ownership and access authorisations.',{controls:[control('ac-2.1','Automated account management','Use automated mechanisms to support the management of accounts.')]}),control('ac-3','Access enforcement','Enforce approved authorisations for logical access to information.')]},{id:'au',title:'Audit & accountability',parts:[{name:'overview',prose:'Create records that help reconstruct and review security-relevant activity.'}],controls:[control('au-1','Audit policy and procedures','Establish responsibilities for audit and accountability.'),control('au-2','Event logging','Identify the types of events the system can log.')]}], 'back-matter':{resources:[{uuid:'ea4acaaa-68bb-4579-a6e2-f1701dff9f98',title:'Example supporting material',description:'This workspace demonstrates nested groups, control enhancements, parameter tailoring and grey matter.'}]}}};
-const exampleProfile={profile:{uuid:'a3350bd9-5d93-4c5b-9e5b-304fd5f2b93a',metadata:metadata('Essential security profile'),imports:[{href:'example-catalog.json','include-controls':[{'with-ids':['ac-1','ac-2','au-2'],'with-child-controls':'yes'}]}],merge:{'as-is':true},modify:{'set-parameters':[{'param-id':'ac-1_prm',values:['every six months']}]}}};
-function notice(text,error=false){$('#message').innerHTML=text?`<div class="notice ${error?'error':''}">${esc(text)}</div>`:''}
-function fields(obj){if(obj===null||obj===undefined)return '';if(typeof obj!=='object')return `<p>${esc(obj)}</p>`;if(Array.isArray(obj))return obj.map(x=>`<div class="part">${fields(x)}</div>`).join('');return `<dl>${Object.entries(obj).map(([k,v])=>`<div class="kv"><dt>${esc(k)}</dt><dd>${typeof v==='object'?fields(v):esc(v)}</dd></div>`).join('')}</dl>`}
-function parts(items=[]){return items.map(p=>`<div class="part"><h4>${esc(p.title||p.name)} ${p.id?`<small>· ${esc(p.id)}</small>`:''}</h4>${p.prose?`<p>${esc(p.prose)}</p>`:''}${fields(Object.fromEntries(Object.entries(p).filter(([k])=>!['title','name','id','prose','parts'].includes(k))))}${parts(p.parts)}</div>`).join('')}
-function grey(root){return Object.fromEntries(Object.entries(root).filter(([k])=>!['controls','groups'].includes(k)))}
-function allGroups(root){return (root.groups||[]).flatMap(g=>[g,...allGroups(g)])}
-function renderUnsafe(){if(!docs.length)return;const entry=docs[current],{type,body}=model(entry.doc),issues=validate(entry.doc);let result,problem;try{result=previewCache.get(entry.doc);if(!result){result=preview(entry.doc,docs);previewCache.set(entry.doc,result)}}catch(e){problem=e.message;result={rows:[],sources:[],notes:[]}}const errorCount=issues.filter(i=>i.severity==='error').length;$('#doc-count').textContent=docs.length+' files';$('#documents').innerHTML=docs.map((d,i)=>`<button class="doc ${i===current?'active':''}" data-doc="${i}">${esc(model(d.doc).body.metadata?.title||d.name)}<small>${esc(model(d.doc).type)} · ${esc(documentPath(d))}</small></button>`).join('');$('#heading').innerHTML=`<div><p class="eyebrow">${type==='profile'?'PROFILE SELECTION PREVIEW':'CATALOGUE'}</p><h2>${esc(body.metadata?.title||entry.name)}</h2><p>${result.rows.length} controls · ${new Set(result.rows.flatMap(r=>r.groups.map(g=>g.id||g.title))).size} groups · OSCAL ${esc(body.metadata?.['oscal-version']||'unknown')}</p></div><span class="badge ${issues.length?'warn':''}">${errorCount?errorCount+' validation errors':issues.length?'Version notice':'Schema checks passed'}</span>`;$('#issue-count').textContent=issues.length?`(${issues.length})`:'';const groupMap=new Map();for(const source of type==='catalog'?[body]:result.sources)for(const g of allGroups(source))groupMap.set(g.id||g.title,g);$('#groups').innerHTML=[...groupMap].map(([id,g])=>`<button class="group ${group===id?'active':''}" data-group="${esc(id)}">${esc(g.title||id)} <small>(${result.rows.filter(r=>r.groups.some(x=>(x.id||x.title)===id)).length})</small></button>`).join('')||'<p class="side-foot">No source groups</p>';document.querySelectorAll('[role=tab]').forEach(b=>{b.setAttribute('aria-selected',b.dataset.tab===tab);b.tabIndex=b.dataset.tab===tab?0:-1});
-if(tab==='validation'){$('#panel').innerHTML=`<div class="matter-block"><h3>Validation report</h3><p>Checked against bundled NIST OSCAL 1.0.4 JSON Schema, with identifier checks. Profile processing is reported separately.</p>${issues.length?issues.map(i=>`<div class="issue"><span class="badge warn">${esc(i.severity)}</span><code>${esc(i.path)}</code>${esc(i.message)}</div>`).join(''):'<p>Schema and identifier checks passed.</p>'}</div>${problem?`<div class="notice error">${esc(problem)}</div>`:''}${result.notes.map(n=>`<div class="notice">${esc(n)}</div>`).join('')}`;return}
-if(tab==='source'){$('#panel').innerHTML=`<pre>${esc(JSON.stringify(entry.doc,null,2))}</pre>`;return}
-if(tab==='matter'){const roots=type==='catalog'?[body]:[body,...result.sources];$('#panel').innerHTML=`<div class="count">Grey matter · metadata, guidance, parameters and supporting resources</div>${problem?`<div class="notice error">${esc(problem)}</div>`:''}${roots.map(r=>`<section class="matter-block"><h3>${esc(r.metadata?.title||'Document')}</h3>${fields(grey(r))}</section>${allGroups(r).filter(g=>!group||(g.id||g.title)===group).map(g=>`<section class="matter-block"><h3>${esc(g.title||g.id)}</h3>${fields(grey(g))}</section>`).join('')}`).join('')}`;return}
-const q=$('#search').value.trim().toLowerCase();const rows=result.rows.filter(r=>(!group||r.groups.some(g=>(g.id||g.title)===group))&&JSON.stringify(r.control).toLowerCase().includes(q));$('#panel').innerHTML=`${type==='profile'?'<div class="notice">Selection preview: selected controls and control-level parameter settings are shown within source groups. This is not a fully resolved OSCAL catalogue.</div>':''}${errorCount?'<div class="notice error">This document has validation errors. Displayed content is for inspection only.</div>':''}${problem?`<div class="notice error">${esc(problem)}</div>`:''}${result.notes.map(n=>`<div class="notice">${esc(n)}</div>`).join('')}<div class="count"><span>${rows.length} ${rows.length===1?'control':'controls'} shown</span><span>${group?'Filtered by group':'All groups'}</span></div>${rows.length?rows.map((r,i)=>`<details class="control" ${i===0?'open':''}><summary><span class="id">${esc(r.control.id)}</span><strong>${esc(r.control.title)}</strong><span class="crumb">${esc([...r.groups.map(g=>g.title),...r.parents].join(' / ')||'Ungrouped')}${r.source?' · '+esc(r.source):''}</span></summary><div class="detail">${parts(r.control.parts)}${r.control.params?.length?'<h4>Parameters</h4>'+fields(r.control.params):''}${fields(Object.fromEntries(Object.entries(r.control).filter(([k])=>!['id','title','parts','params','controls'].includes(k))))}</div></details>`).join(''):'<div class="empty">'+(problem?'Load the missing source files to see the profile’s controls.':'No controls match this view.')+'</div>'}`}
-function render(){try{renderUnsafe()}catch(e){notice('This document cannot be displayed: '+e.message+'. Inspect its validation report or source.',true);const entry=docs[current];if(entry){const issues=validate(entry.doc);$('#panel').innerHTML='<section class="matter-block"><h3>Invalid document structure</h3>'+issues.map(i=>'<p>'+esc(i.path)+' '+esc(i.message)+'</p>').join('')+'</section><pre>'+esc(JSON.stringify(entry.doc,null,2))+'</pre>';}}}
-function loadDemo(){previewCache=new WeakMap();docs=[{name:'example-profile.json',doc:structuredClone(exampleProfile)},{name:'example-catalog.json',doc:structuredClone(exampleCatalog)}];current=0;group='';$('#search').value='';notice('Example workspace loaded. These documents are illustrative, not an official baseline.');render()}
-$('#demo').onclick=loadDemo;$('#all-groups').onclick=()=>{group='';render()};$('#search').oninput=render;$('#documents').onclick=e=>{const b=e.target.closest('[data-doc]');if(b){current=Number(b.dataset.doc);group='';render()}};$('#groups').onclick=e=>{const b=e.target.closest('[data-group]');if(b){group=b.dataset.group;render()}};$('.tabs').onclick=e=>{const b=e.target.closest('[data-tab]');if(b){tab=b.dataset.tab;render()}};$('.tabs').onkeydown=e=>{const bs=[...document.querySelectorAll('[role=tab]')];let i=bs.indexOf(document.activeElement);if(i<0)return;if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();i=e.key==='Home'?0:e.key==='End'?bs.length-1:(i+(e.key==='ArrowRight'?1:-1)+bs.length)%bs.length;tab=bs[i].dataset.tab;render();bs[i].focus()}};
-async function openDocuments(e, folder=false){
-  const input=e.target,files=[...input.files];if(!files.length)return;
-  $('#files').disabled=true;$('#folder').disabled=true;$('#demo').disabled=true;
-  notice('Reading local documents…');
-  try{
-    const previous=docs[current]?.doc;
-    const result=await readDocuments(files,docs,{folder});docs=result.documents;previewCache=new WeakMap();
-    const existing=docs.findIndex(d=>d.doc===previous);
-    const firstProfile=docs.findIndex(d=>model(d.doc).type==='profile'&&!d.name.startsWith('example-'));
-    current=firstProfile>=0?firstProfile:existing>=0?existing:Math.max(0,docs.length-1);
-    group='';$('#search').value='';
-    notice([`${result.added} OSCAL file(s) loaded.`,result.skipped?`${result.skipped} other file(s) skipped.`:'',...result.errors.slice(0,5),result.errors.length>5?`${result.errors.length-5} more file errors.`:''].filter(Boolean).join(' '),result.errors.length>0);
-    render();
-  }finally{input.value='';$('#files').disabled=false;$('#folder').disabled=false;$('#demo').disabled=false;}
-}
-$('#files').onchange=e=>openDocuments(e);
-$('#folder').onchange=e=>openDocuments(e,true);
+/** Browser state, event handling and startup. Pure HTML lives in views.mjs. */
+import {
+  readDocuments
+} from './imports.mjs';
+import {
+  model,
+  makeValidator,
+  preview
+} from './engine.mjs';
+import {
+  exampleCatalog,
+  exampleProfile
+} from './examples.mjs';
+import {
+  escapeHtml,
+  renderNotice,
+  renderDocuments,
+  renderHeading,
+  renderGroups,
+  renderValidation,
+  renderSource,
+  renderGreyMatter,
+  renderControls,
+  renderSectionOptions
+} from './views.mjs';
 
-try{const schemas=Object.fromEntries(await Promise.all(['catalog','profile'].map(async k=>{const r=await fetch(`oscal_${k}_schema.json`);if(!r.ok)throw Error('Cannot load bundled schema.');return [k,await r.json()]})));const check=makeValidator(window.ajv7,schemas),cache=new WeakMap();validate=doc=>{if(!cache.has(doc))cache.set(doc,check(doc));return cache.get(doc)};loadDemo()}catch(e){notice('Could not start validation: '+e.message,true);$('#files').disabled=true;$('#folder').disabled=true;$('#demo').disabled=true}
+const select = selector => document.querySelector(selector);
+let documents = [];
+let currentDocumentIndex = 0;
+let tab = 'controls';
+let group = '';
+let validate;
+// Display preferences last for this session; assessment sections start hidden.
+const sectionVisibility = {
+  metadata: false
+};
+
+// A preview depends on the entire workspace, so any file load clears this cache.
+let previewCache = new WeakMap();
+
+function notice(message, isError = false) {
+  select('#message').innerHTML = renderNotice(message, isError);
+}
+
+function renderWorkspace() {
+  if (!documents.length) return;
+  const entry = documents[currentDocumentIndex];
+  const {
+    type,
+    body
+  } = model(entry.doc);
+  const issues = validate(entry.doc);
+  let result;
+  let problem;
+
+  // Missing imports must not hide the original document or its validation report.
+  try {
+    result = previewCache.get(entry.doc);
+    if (!result) {
+      result = preview(entry.doc, documents);
+      previewCache.set(entry.doc, result);
+    }
+  } catch (error) {
+    problem = error.message;
+    result = {
+      rows: [],
+      sources: [],
+      notes: []
+    };
+  }
+
+  const errorCount = issues.filter(issue => issue.severity === 'error').length;
+  select('#doc-count').textContent = documents.length + ' files';
+  select('#documents').innerHTML = renderDocuments(documents, currentDocumentIndex);
+  select('#heading').innerHTML = renderHeading(entry, type, body, result, issues);
+  select('#issue-count').textContent = issues.length ? `(${issues.length})` : '';
+  select('#groups').innerHTML = renderGroups(type === 'catalog' ? [body] : result.sources, result, group);
+
+  select('#section-options').innerHTML = renderSectionOptions(result.rows, sectionVisibility);
+
+  // Only the active tab belongs in the keyboard's normal tab order.
+  document.querySelectorAll('[role=tab]').forEach(button => {
+    button.setAttribute('aria-selected', button.dataset.tab === tab);
+    button.tabIndex = button.dataset.tab === tab ? 0 : -1;
+  });
+
+  const panel = select('#panel');
+  if (tab === 'validation') {
+    panel.innerHTML = renderValidation(issues, result, problem);
+  } else if (tab === 'source') {
+    panel.innerHTML = renderSource(entry.doc);
+  } else if (tab === 'matter') {
+    const roots = type === 'catalog' ? [body] : [body, ...result.sources];
+    panel.innerHTML = renderGreyMatter(roots, group, problem);
+  } else {
+    const query = select('#search').value.trim().toLowerCase();
+    panel.innerHTML = renderControls(type, result, problem, errorCount, group, query, sectionVisibility);
+  }
+}
+
+function render() {
+  try {
+    renderWorkspace();
+  } catch (error) {
+    // Structurally invalid input is still inspectable as escaped source JSON.
+    notice('This document cannot be displayed: ' + error.message +
+      '. Inspect its validation report or source.', true);
+    const entry = documents[currentDocumentIndex];
+    if (entry) {
+      const issues = validate(entry.doc);
+      const messages = issues.map(issue => '<p>' + escapeHtml(issue.path) + ' ' + escapeHtml(issue.message) +
+        '</p>').join('');
+      select('#panel').innerHTML = '<section class="matter-block"><h3>Invalid document structure</h3>' +
+        messages + '</section>' + renderSource(entry.doc);
+    }
+  }
+}
+
+function loadDemo() {
+  previewCache = new WeakMap();
+  documents = [{
+    name: 'example-profile.json',
+    doc: structuredClone(exampleProfile)
+  }, {
+    name: 'example-catalog.json',
+    doc: structuredClone(exampleCatalog)
+  }];
+  currentDocumentIndex = 0;
+  group = '';
+  select('#search').value = '';
+  notice('Example workspace loaded. These documents are illustrative, not an official baseline.');
+  render()
+}
+// Event delegation survives re-rendering the document and group buttons.
+select('#section-options').onchange = event => {
+  const input = event.target.closest('[data-section]');
+  if (!input) return;
+  sectionVisibility[input.dataset.section] = input.checked;
+  render();
+  // Re-rendering replaces checkbox nodes: return keyboard focus to this setting.
+  const replacement = [...select('#section-options').querySelectorAll('input')].find(option => option
+    .dataset.section === input.dataset.section);
+  replacement?.focus();
+};
+select('#demo').onclick = loadDemo;
+select('#all-groups').onclick = () => {
+  group = '';
+  render()
+};
+select('#search').oninput = render;
+select('#documents').onclick = event => {
+  const button = event.target.closest('[data-doc]');
+  if (button) {
+    currentDocumentIndex = Number(button.dataset.doc);
+    group = '';
+    render()
+  }
+};
+select('#groups').onclick = event => {
+  const button = event.target.closest('[data-group]');
+  if (button) {
+    group = button.dataset.group;
+    render()
+  }
+};
+select('.tabs').onclick = event => {
+  const button = event.target.closest('[data-tab]');
+  if (button) {
+    tab = button.dataset.tab;
+    render()
+  }
+};
+select('.tabs').onkeydown = event => {
+  const tabButtons = [...document.querySelectorAll('[role=tab]')];
+  let i = tabButtons.indexOf(document.activeElement);
+  if (i < 0) return;
+  if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+    event.preventDefault();
+    i = event.key === 'Home' ? 0 : event.key === 'End' ? tabButtons.length - 1 : (i + (event.key ===
+      'ArrowRight' ?
+      1 : -1) + tabButtons.length) % tabButtons.length;
+    tab = tabButtons[i].dataset.tab;
+    render();
+    tabButtons[i].focus()
+  }
+};
+// Loading replaces entries by path and preserves browser-local document privacy.
+async function openDocuments(event, folder = false) {
+  const input = event.target,
+    files = [...input.files];
+  if (!files.length) return;
+  select('#files').disabled = true;
+  select('#folder').disabled = true;
+  select('#demo').disabled = true;
+  notice('Reading local documents…');
+  try {
+    const previous = documents[currentDocumentIndex]?.doc;
+    const result = await readDocuments(files, documents, {
+      folder
+    });
+    documents = result.documents;
+    previewCache = new WeakMap();
+    const existing = documents.findIndex(d => d.doc === previous);
+    const firstProfile = documents.findIndex(d => model(d.doc).type === 'profile' && !d.name
+      .startsWith('example-'));
+    currentDocumentIndex = firstProfile >= 0 ? firstProfile : existing >= 0 ? existing : Math.max(0,
+      documents
+      .length - 1);
+    group = '';
+    select('#search').value = '';
+    notice([`${result.added} OSCAL file(s) loaded.`, result.skipped ?
+      `${result.skipped} other file(s) skipped.` : '', ...result.errors.slice(0, 5), result
+      .errors.length > 5 ? `${result.errors.length-5} more file errors.` : ''
+    ].filter(Boolean).join(' '), result.errors.length > 0);
+    render();
+  } finally {
+    input.value = '';
+    select('#files').disabled = false;
+    select('#folder').disabled = false;
+    select('#demo').disabled = false;
+  }
+}
+select('#files').onchange = event => openDocuments(event);
+select('#folder').onchange = event => openDocuments(event, true);
+
+// Compile bundled schemas once; individual validation results follow document identity.
+try {
+  const schemas = Object.fromEntries(await Promise.all(['catalog', 'profile'].map(async k => {
+    const r = await fetch(`oscal_${k}_schema.json`);
+    if (!r.ok) throw Error('Cannot load bundled schema.');
+    return [k, await r.json()]
+  })));
+  const check = makeValidator(window.ajv7, schemas),
+    cache = new WeakMap();
+  validate = doc => {
+    if (!cache.has(doc)) cache.set(doc, check(doc));
+    return cache.get(doc)
+  };
+  loadDemo()
+} catch (event) {
+  notice('Could not start validation: ' + event.message, true);
+  select('#files').disabled = true;
+  select('#folder').disabled = true;
+  select('#demo').disabled = true
+}

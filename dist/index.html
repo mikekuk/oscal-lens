@@ -1,1 +1,64 @@
-<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Explore OSCAL catalogues, profile selections, nested groups and supporting material. Validate JSON locally."><title>OSCAL Lens — Control explorer</title><link rel="stylesheet" href="styles.css"><script src="ajv.js" defer></script><script type="module" src="app.mjs"></script></head><body><header><a class="brand" href="./"><span class="mark">O</span> OSCAL <b>Lens</b></a><span class="header-note">CONTROL EXPLORER</span><div class="file-actions"><label class="upload secondary">Open folder<input id="folder" type="file" webkitdirectory multiple></label><label class="upload">＋ Open files<input id="files" type="file" accept=".json,application/json" multiple></label></div></header><main><section class="intro"><div><p class="eyebrow">CATALOGUES / PROFILES</p><h1>See the controls.<br><span>Keep the context.</span></h1><p>Explore requirements, profile selections and the material between them.</p></div><div class="local"><strong>Documents stay in your browser</strong><p>Open your oscal-content folder to connect unresolved profiles with their JSON catalogues, or select individual files.</p><button id="demo">Load example workspace ↗</button></div></section><div id="message" role="status" aria-live="polite"></div><section class="workspace"><aside><div class="side-title">WORKSPACE <span id="doc-count">0 files</span></div><div id="documents"></div><label class="search-label" for="search">Find a control</label><input id="search" type="search" placeholder="ID, title or requirement…"><div class="side-title">GROUPS <button id="all-groups">Show all</button></div><nav id="groups" aria-label="Catalogue groups"></nav><p class="side-foot">OSCAL 1.0.4 schema checks<br>JSON · Local processing</p></aside><article><div id="heading"></div><div class="tabs" role="tablist" aria-label="Document views"><button role="tab" aria-selected="true" data-tab="controls">Controls</button><button role="tab" aria-selected="false" data-tab="matter">Grey matter</button><button role="tab" aria-selected="false" data-tab="validation">Validation <span id="issue-count"></span></button><button role="tab" aria-selected="false" data-tab="source">Source</button></div><div id="panel" role="tabpanel"></div></article></section><footer>OSCAL Lens <span>Context for every control.</span><a href="https://pages.nist.gov/OSCAL/" target="_blank" rel="noreferrer">About OSCAL ↗</a></footer></main></body></html>
+<!doctype html>
+<html lang="en-GB">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description"
+    content="Explore OSCAL catalogues, profile selections, nested groups and supporting material. Validate JSON locally.">
+  <title>OSCAL Lens — Control explorer</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="ajv.js" defer></script>
+  <script type="module" src="app.mjs"></script>
+</head>
+
+<body>
+  <header><a class="brand" href="./"><span class="mark">O</span> OSCAL <b>Lens</b></a><span
+      class="header-note">CONTROL EXPLORER</span>
+    <div class="file-actions"><label class="upload secondary">Open folder<input id="folder" type="file"
+          webkitdirectory multiple></label><label class="upload">＋ Open files<input id="files" type="file"
+          accept=".json,application/json" multiple></label></div>
+  </header>
+  <main>
+    <section class="intro">
+      <div>
+        <p class="eyebrow">CATALOGUES / PROFILES</p>
+        <h1>See the controls.<br><span>Keep the context.</span></h1>
+        <p>Explore requirements, profile selections and the material between them.</p>
+      </div>
+      <div class="local"><strong>Documents stay in your browser</strong>
+        <p>Open your oscal-content folder to connect unresolved profiles with their JSON catalogues,
+          or select individual files.</p><button id="demo">Load example workspace ↗</button>
+      </div>
+    </section>
+    <div id="message" role="status" aria-live="polite"></div>
+    <section class="workspace">
+      <aside>
+        <div class="side-title">WORKSPACE <span id="doc-count">0 files</span></div>
+        <div id="documents"></div><label class="search-label" for="search">Find a
+          control</label><input id="search" type="search" placeholder="ID, title or requirement…">
+        <div class="side-title">GROUPS <button id="all-groups">Show all</button></div>
+        <nav id="groups" aria-label="Catalogue groups"></nav>
+        <fieldset class="section-settings">
+          <legend>Control sections</legend>
+          <div id="section-options"></div>
+        </fieldset>
+        <p class="side-foot">OSCAL 1.0.4 schema checks<br>JSON · Local processing</p>
+      </aside>
+      <article>
+        <div id="heading"></div>
+        <div class="tabs" role="tablist" aria-label="Document views"><button role="tab" aria-selected="true"
+            data-tab="controls">Controls</button><button role="tab" aria-selected="false"
+            data-tab="matter">Grey matter</button><button role="tab" aria-selected="false"
+            data-tab="validation">Validation <span id="issue-count"></span></button><button role="tab"
+            aria-selected="false" data-tab="source">Source</button></div>
+        <div id="panel" role="tabpanel"></div>
+      </article>
+    </section>
+    <footer>OSCAL Lens <span>Context for every control.</span><a href="https://pages.nist.gov/OSCAL/"
+        target="_blank" rel="noreferrer">About OSCAL ↗</a>
+    </footer>
+  </main>
+</body>
+
+</html>

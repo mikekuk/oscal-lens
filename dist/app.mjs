@@ -32,7 +32,8 @@ let group = '';
 let validate;
 // Display preferences last for this session; assessment sections start hidden.
 const sectionVisibility = {
-  metadata: false
+  metadata: false,
+  parameters: false
 };
 
 // A preview depends on the entire workspace, so any file load clears this cache.

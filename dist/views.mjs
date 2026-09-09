@@ -61,6 +61,9 @@ export function renderSectionOptions(rows, visibility) {
     return `<label class="section-option"><input type="checkbox" data-section="${escapeHtml(name)}" ${sectionVisible(name, visibility) ? 'checked' : ''}> ${escapeHtml(label)}</label>`;
   });
   options.push(
+    `<label class="section-option"><input type="checkbox" data-section="parameters" ${visibility.parameters ? 'checked' : ''}> Parameters</label>`
+  );
+  options.push(
     `<label class="section-option"><input type="checkbox" data-section="metadata" ${visibility.metadata ? 'checked' : ''}> Control metadata</label>`
   );
   return options.join('');
@@ -176,6 +179,11 @@ function renderControl(row, index, visibility) {
   const control = row.control;
   const breadcrumb = [...row.groups.map(group => group.title), ...row.parents].join(' / ') || 'Ungrouped';
   const source = row.source ? ' · ' + escapeHtml(row.source) : '';
+  // Show the effective scope so inherited and profile-tailored values agree with inline ODPs.
+  const effectiveParameters = Object.values(row.parameters || {}).length
+    ? Object.values(row.parameters) : (control.params || []);
+  const parameters = visibility.parameters && effectiveParameters.length
+    ? `<section class="control-section"><h4>Parameters</h4>${renderFields(effectiveParameters)}</section>` : '';
   const metadata = visibility.metadata ? renderFields(omitFields(control, ['id', 'title', 'parts', 'params',
     'controls'
   ])) : '';
@@ -183,7 +191,7 @@ function renderControl(row, index, visibility) {
     <summary><span class="id">${escapeHtml(control.id)}</span><strong>${escapeHtml(control.title)}</strong>
       <span class="crumb">${escapeHtml(breadcrumb)}${source}</span>
     </summary>
-    <div class="detail">${renderParts(control.parts, row.parameters, visibility)}${metadata}</div>
+    <div class="detail">${renderParts(control.parts, row.parameters, visibility)}${parameters}${metadata}</div>
   </details>`;
 }
 

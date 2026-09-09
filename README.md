@@ -60,7 +60,7 @@ Source documents remain unchanged. This remains a selection/tailoring viewer rat
 
 ODP insertions such as `{{ insert: param, frequency }}` are replaced by effective values from the loaded profile chain. Outer profile settings override imported settings. Unset values show `[Assignment: frequency]` or `[Selection (one or more): choice A; choice B]` using the parameter definition. Choices and values can reference other parameters; missing definitions and cycles produce explicit prompts. No values are invented.
 
-Statement items appear on separate lines with their original labels (a., b., 1., 2., etc.). Internal part IDs and label-property tables remain available in Source. There is no separate Parameters block within a control.
+Statement items appear on separate lines with their original labels (a., b., 1., 2., etc.). Internal part IDs and label-property tables remain available in Source. Enable **Parameters** in the sidebar to inspect the effective parameter definitions and values, including inherited and profile-tailored parameters. This section is hidden by default; inline substitution remains active regardless of the toggle.
 
 The sidebar's **Control sections** checkboxes show or hide each part type. Assessment sections and control metadata are hidden by default. Preferences apply across documents during the current session and reset on refresh; original source content is never removed. Nested items follow their containing section's visibility.
 

@@ -58,7 +58,7 @@ Source documents remain unchanged. This remains a selection/tailoring viewer rat
 
 ## Reading controls
 
-ODP insertions such as `{{ insert: param, frequency }}` are replaced by effective values from the loaded profile chain. Outer profile settings override imported settings. Unset values show `[Assignment: frequency]` or `[Selection (one or more): choice A; choice B]` using the parameter definition. Choices and values can reference other parameters; missing definitions and cycles produce explicit prompts. No values are invented.
+ODP insertions such as `{{ insert: param, frequency }}` are replaced by effective values from the loaded profile chain. Outer profile settings override imported settings. Unset values show `[Assignment: frequency]` or `[Selection (one or more): choice A; choice B]` using the parameter definition. NIST RMF `aggregates` properties (and unnamespaced `aggregates` properties) are followed recursively, combining referenced ODP results in declared order with semicolons. Explicit values on the aggregate itself take precedence. Unset members keep their prompts rather than disappearing. Choices and values can reference other parameters; missing definitions and cycles produce explicit prompts. No values are invented.
 
 Statement items appear on separate lines with their original labels (a., b., 1., 2., etc.). Internal part IDs and label-property tables remain available in Source. Enable **Parameters** in the sidebar to inspect the effective parameter definitions and values, including inherited and profile-tailored parameters. This section is hidden by default; inline substitution remains active regardless of the toggle.
 

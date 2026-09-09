@@ -20,6 +20,20 @@ export function substituteParameters(prose, parameters = {}, trail = []) {
 
     // Effective profile values take precedence over assignment/selection prompts.
     if (parameter.values?.length) return parameter.values.map(expand).join('; ');
+
+    // NIST legacy parameters can aggregate several ODPs using RMF properties,
+    // without any insertion expression in their label. Resolve these references
+    // against the same effective scope as direct insertions, in declared order.
+    // Re-entering substituteParameters also retains the existing cycle guard.
+    const aggregates = (parameter.props || []).filter(property =>
+      property.name === 'aggregates' &&
+      (!property.ns || property.ns === 'http://csrc.nist.gov/ns/rmf') &&
+      typeof property.value === 'string' && property.value.trim()
+    );
+    if (aggregates.length) {
+      return aggregates.map(property => expand(`{{ insert: param, ${property.value.trim()} }}`)).join('; ');
+    }
+
     if (parameter.select?.choice?.length) {
       const quantity = parameter.select['how-many'] === 'one-or-more' ? 'one or more' : 'one';
       return `[Selection (${quantity}): ${parameter.select.choice.map(expand).join('; ')}]`;

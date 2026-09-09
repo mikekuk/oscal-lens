@@ -37,13 +37,24 @@ Schema validity is distinct from profile processing and does not prove referenti
 
 ## Profile selection scope
 
-Supported: multiple catalogue imports, recursive profile imports, `include-all`, explicit `with-ids`, wildcard `matching`, `with-child-controls`, exclusions, cycle detection, missing-selection errors, original group context and `set-parameters` across catalogue, group, parent-control and control parameter scopes. Folder imports resolve paths relative to the containing profile, including `../` segments and chained profiles. Internal `#resource` imports select JSON-compatible back-matter `rlinks` regardless of XML/YAML link order. Available JSON alternatives are checked by full path first. Loose file uploads and absolute URL references can bind by an unambiguous filename; directory imports never silently substitute a same-named file in the wrong folder. For an incomplete folder upload you can explicitly add a missing JSON source through Open files. Sources are never fetched automatically. Load external sources yourself. Embedded base64 imports are not supported. URL queries/fragments do not identify separate local files, and remote URLs are not fetched. The folder picker requires a browser with directory-upload support; use Open files as a fallback.
+Supported: multiple catalogue imports, recursive profile imports, `include-all`, explicit `with-ids`, wildcard `matching`, `with-child-controls`, exclusions, cycle detection, missing-selection errors, original group context and `alters` additions/removals and `set-parameters` across catalogue, group, parent-control and control parameter scopes. Folder imports resolve paths relative to the containing profile, including `../` segments and chained profiles. Internal `#resource` imports select JSON-compatible back-matter `rlinks` regardless of XML/YAML link order. Available JSON alternatives are checked by full path first. Loose file uploads and absolute URL references can bind by an unambiguous filename; directory imports never silently substitute a same-named file in the wrong folder. For an incomplete folder upload you can explicitly add a missing JSON source through Open files. Sources are never fetched automatically. Load external sources yourself. Embedded base64 imports are not supported. URL queries/fragments do not identify separate local files, and remote URLs are not fetched. The folder picker requires a browser with directory-upload support; use Open files as a fallback.
 
-The result is deliberately labelled a **selection preview**, not a resolved OSCAL catalogue. `merge.custom`, merge combine policies, flattening, `modify.alters`, final metadata/back-matter reconciliation are not implemented. These operations produce notices when encountered; duplicates remain visible. Source groups and original grey matter are retained for inspection, including groups with no selected controls. For complete standards-oriented profile resolution, use [NIST OSCAL CLI](https://github.com/usnistgov/oscal-cli) and load its resulting catalogue here.
+The result is deliberately labelled a **selection preview**, not a resolved OSCAL catalogue. `merge.custom`, merge combine policies, flattening, final metadata/back-matter reconciliation are not implemented. These operations produce notices when encountered; duplicates remain visible. Source groups and original grey matter are retained for inspection, including groups with no selected controls. For complete standards-oriented profile resolution, use [NIST OSCAL CLI](https://github.com/usnistgov/oscal-cli) and load its resulting catalogue here.
 
 ## Privacy and security
 
 Loaded documents stay in memory in your browser. There is no document upload service, analytics or persistent document storage. Refreshing clears loaded files. Content is escaped and shown as text; embedded HTML, OSCAL prose markup and links are not executed. External links in documents are shown as text. Very large or deeply nested documents can exceed browser resources despite the per-file limit.
+
+## Profile additions and removals
+
+`modify.alters` targets selected controls by `control-id`. For each alteration, removals are applied before additions; alterations follow their document order. Imported profile alterations run before those in an outer profile. Effective parameter settings are applied after alterations so added parameters can be set in the same profile.
+
+- **Adds:** title, parameters, properties, links and parts; implicit control targets or explicit descendant `by-id`; `starting`, `ending`, `before` and `after` positions. When omitted, position defaults to `ending`. JSON keeps ordering within each content array.
+- **Removes:** `by-id`, `by-name`, `by-class`, `by-ns` and singular `by-item-name` (such as `part` or `prop`). Every supplied criterion must match. Nested content and selected child controls are supported. An empty removal selector matches all control contents.
+- Missing addition/control targets and unmatched removals produce notices. Ambiguous targets and unsupported selector/content keys are reported instead of silently applying a guessed operation.
+- Added custom sections appear automatically in the control view and sidebar. Assessment sections retain the existing hidden-by-default setting. Added/removed parameters update the inline ODP scope.
+
+Source documents remain unchanged. This remains a selection/tailoring viewer rather than a complete OSCAL resolver: cross-type XML element ordering, full result-schema conformance and the merge/reconciliation limitations above are not certified by this implementation.
 
 ## Reading controls
 
@@ -59,6 +70,7 @@ The sidebar's **Control sections** checkboxes show or hide each part type. Asses
 - `dist/app.mjs`: application state, event handlers and startup.
 - `dist/views.mjs`: escaped HTML rendering and control-section preferences.
 - `dist/examples.mjs`: synthetic example workspace.
+- `dist/alterations.mjs`: additions, removals and effective selected-control tree updates.
 - `dist/parameters.mjs`: inline ODP substitution, scope inheritance and unset-value prompts.
 - `dist/engine.mjs`: schema validation and profile-selection logic.
 - `dist/imports.mjs`: folder loading, JSON resource selection and relative import resolution.

@@ -1,4 +1,7 @@
 import {
+  applyAlterations
+} from './alterations.mjs';
+import {
   parameterScope
 } from './parameters.mjs';
 import {
@@ -144,7 +147,7 @@ function matches(row, selectors = []) {
 
 /**
  * Build a selection preview from catalogue/profile imports.
- * This is not a complete OSCAL resolver: unsupported merge/alter directives are
+ * This is not a complete OSCAL resolver: unsupported merge directives are
  * reported in notes, and source groups remain available for contextual display.
  * `trail` tracks the active import chain, rather than all previously seen files.
  */
@@ -198,8 +201,7 @@ export function preview(doc, documents, trail = []) {
   if (body.merge?.combine) notes.push('Merge combine directives are not applied.');
   if (body.merge?.['as-is'] === false || body.merge?.flat) notes.push(
     'Source grouping is retained for this selection preview.');
-  if (body.modify?.alters?.length) notes.push(
-    'Control alterations are not applied. Read the profile source for these directives.');
+  applyAlterations(rows, body.modify?.alters, notes);
   // Each row owns its effective scope, including catalogue/group/parent parameters.
   // Applying outer profile settings last preserves overlay precedence without
   // mutating uploaded documents or previews belonging to another profile.

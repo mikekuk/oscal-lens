@@ -62,28 +62,30 @@ export function renderSectionOptions(rows, visibility) {
   });
   options.push(
     `<label class="section-option"><input type="checkbox" data-section="metadata" ${visibility.metadata ? 'checked' : ''}> Control metadata</label>`
-    );
+  );
   return options.join('');
 }
 
 // A statement is one continuous reading flow. Item labels are printed inline;
 // structural OSCAL IDs and property tables stay in the Source view.
-function renderPartFlow(part, parameters, visibility) {
+function renderPartFlow(part, parameters, visibility, isSectionRoot = false) {
   // Nested items inherit the containing section unless explicitly hidden.
   if (visibility[part.name || 'other'] === false) return '';
   const label = part.props?.find(property => property.name === 'label')?.value;
   const prose = substituteParameters(part.prose, parameters).replace(/\s+/g, ' ').trim();
+  const title = !isSectionRoot && part.title && !part.prose ? `<strong>${escapeHtml(part.title)}</strong> ` :
+    '';
   const prefix = label ? `<strong class="item-label">${escapeHtml(label)}</strong> ` : '';
   const ownText = prose ? `<span class="statement-item">${prefix}${escapeHtml(prose)}</span>` : prefix;
   const children = (part.parts || []).map(child => renderPartFlow(child, parameters, visibility)).filter(
     Boolean);
-  return [ownText, ...children].filter(Boolean).join(' ');
+  return [title, ownText, ...children].filter(Boolean).join(' ');
 }
 
 function renderParts(parts = [], parameters = {}, visibility = {}) {
   return parts.filter(part => sectionVisible(part.name || 'other', visibility)).map(part => {
     const title = part.title || (part.name || 'other').replace(/-/g, ' ');
-    return `<section class="control-section"><h4>${escapeHtml(title)}</h4><p class="statement-flow">${renderPartFlow(part, parameters, visibility)}</p></section>`;
+    return `<section class="control-section"><h4>${escapeHtml(title)}</h4><p class="statement-flow">${renderPartFlow(part, parameters, visibility, true)}</p></section>`;
   }).join('');
 }
 
@@ -194,7 +196,7 @@ export function renderControls(type, result, problem, errorCount, selectedGroup,
   });
   const previewNotice = type === 'profile' ? renderNotice(
     'Selection preview: selected controls and effective parameter values are shown within source groups. This is not a fully resolved OSCAL catalogue.'
-    ) : '';
+  ) : '';
   const invalidNotice = errorCount ? renderNotice(
     'This document has validation errors. Displayed content is for inspection only.', true) : '';
   const emptyMessage = problem ? 'Load the missing source files to see the profile’s controls.' :

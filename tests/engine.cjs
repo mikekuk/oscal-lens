@@ -149,7 +149,7 @@ test('missing imports, unknown IDs and cycles fail explicitly', async () => {
     doc: p
   }]), /Circular/)
 });
-test('unsupported alterations and merge directives produce notices', async () => {
+test('unsupported merge directives still produce notices after alterations', async () => {
   const {
     preview
   } = await ready;
@@ -167,5 +167,5 @@ test('unsupported alterations and merge directives produce notices', async () =>
   assert.equal(preview(p, [{
     name: 'cat.json',
     doc: catalog
-  }]).notes.length, 2)
+  }]).notes.length, 1)
 });

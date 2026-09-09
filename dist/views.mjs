@@ -66,7 +66,7 @@ export function renderSectionOptions(rows, visibility) {
   return options.join('');
 }
 
-// A statement is one continuous reading flow. Item labels are printed inline;
+// Statement items keep their labels inline, with a line break between items;
 // structural OSCAL IDs and property tables stay in the Source view.
 function renderPartFlow(part, parameters, visibility, isSectionRoot = false) {
   // Nested items inherit the containing section unless explicitly hidden.
@@ -79,7 +79,7 @@ function renderPartFlow(part, parameters, visibility, isSectionRoot = false) {
   const ownText = prose ? `<span class="statement-item">${prefix}${escapeHtml(prose)}</span>` : prefix;
   const children = (part.parts || []).map(child => renderPartFlow(child, parameters, visibility)).filter(
     Boolean);
-  return [title, ownText, ...children].filter(Boolean).join(' ');
+  return [title + ownText, ...children].filter(Boolean).join('<br>');
 }
 
 function renderParts(parts = [], parameters = {}, visibility = {}) {

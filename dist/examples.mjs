@@ -93,10 +93,58 @@ export const exampleProfile = {
       'as-is': true
     },
     modify: {
+      alters: [{'control-id': 'ac-1', adds: [{parts: [{id: 'ac-1_profile-note', name: 'guidance', prose: 'Record each review in the policy register.'}]}]}],
       'set-parameters': [{
         'param-id': 'ac-1_prm',
         values: ['every six months']
       }]
     }
+  }
+};
+
+export const exampleMappedCatalog = {
+  catalog: {
+    uuid: '837a10d9-d903-49e1-8941-1a8b62e29a31',
+    metadata: metadata('Example assurance catalogue'),
+    controls: [
+      control('gov-1', 'Policy review', 'Review the access policy at least annually and record approval.'),
+      control('log-1', 'Logging coverage', 'Document and review the security events selected for logging.')
+    ]
+  }
+};
+export const exampleMapping = {
+  'mapping-collection': {
+    uuid: '62492565-7a16-4616-8b26-4b323a508f51',
+    metadata: {...metadata('Example control relationships'), 'oscal-version': '1.2.3'},
+    provenance: {
+      method: 'human', 'matching-rationale': 'semantic', status: 'draft',
+      'mapping-description': 'Illustrative relationships for exploring the viewer; not an authoritative mapping.'
+    },
+    mappings: [
+      {
+        uuid: 'ac0629d6-9d01-4ae8-b427-01c1a0eb8131',
+        'source-resource': {type: 'profile', href: 'example-profile.json'},
+        'target-resource': {type: 'catalog', href: 'example-assurance.json'},
+        maps: [
+          {uuid: '8f7c1bd0-ebaf-4f69-905f-dbd39ac18309', relationship: 'intersects-with',
+            sources: [{type: 'control', 'id-ref': 'ac-1'}],
+            targets: [{type: 'statement', 'id-ref': 'gov-1_smt'}],
+            remarks: 'Both address review. The profile requires six-monthly review; the assurance statement also requires recorded approval.'},
+          {uuid: '6f693b2a-3927-4c37-a2e7-a1b9ef4cbd5a', relationship: 'intersects-with',
+            sources: [{type: 'statement', 'id-ref': 'au-2_smt'}],
+            targets: [{type: 'control', 'id-ref': 'log-1'}],
+            remarks: 'Both address logging scope, with different documentation and review requirements.'}
+        ]
+      },
+      {
+        uuid: '116408a8-71c1-481d-aa41-aadff2b5da5a',
+        'source-resource': {type: 'catalog', href: 'example-catalog.json'},
+        'target-resource': {type: 'catalog', href: 'example-assurance.json'},
+        maps: [{uuid: 'fe7e9ab6-a28b-46d7-b56f-d52a51fa9b21', relationship: 'subset-of',
+          sources: [{type: 'control', 'id-ref': 'ac-1'}],
+          targets: [{type: 'control', 'id-ref': 'gov-1'}],
+          remarks: 'The assurance control also requires recorded approval.'}]
+      }
+    ]
   }
 };

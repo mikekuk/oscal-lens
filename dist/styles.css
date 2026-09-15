@@ -686,3 +686,18 @@ footer a {
   color: #e0e8f5;
   margin-left: .3em;
 }
+
+/* Profile provenance stays legible against the existing dark reading surface. */
+.profile-change { color: #cbb3f5; text-decoration: underline dotted; text-underline-offset: .2em; }
+.profile-legend, .mapping-provenance { font-size: .875rem; color: #aab8cb; }
+.mapping { border: 1px solid #35435a; border-radius: 8px; margin: 12px 0; background: #111b2b; }
+.mapping > summary { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 14px; cursor: pointer; }
+.mapping > summary::before { content: '▸'; }
+.mapping[open] > summary::before { content: '▾'; }
+.mapping-targets { flex-basis: 100%; font-size: .9rem; }
+.mapping-detail { padding: 0 16px 16px; }
+.mapping-detail p, .mapping-targets { overflow-wrap: anywhere; }
+.mapped-item { border-top: 1px solid #35435a; margin-top: 16px; padding-top: 4px; }
+.mapped-item h5 { font-size: 1rem; margin: 12px 0; }
+.profile-removals { margin-top: 16px; color: #cbb3f5; }
+.profile-removals > summary { cursor: pointer; }

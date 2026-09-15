@@ -1,6 +1,6 @@
 # OSCAL Lens
 
-A browser-based OSCAL JSON explorer for catalogues and profile selections. Inspect nested groups, controls, enhancements, inline parameters and **grey matter**: group-level prose and guidance, document metadata, properties, links, roles, parties and back-matter resources.
+A browser-based OSCAL JSON explorer for catalogues, profile selections and control mappings. Inspect nested groups, controls, enhancements, inline parameters and **grey matter**: group-level prose and guidance, document metadata, properties, links, roles, parties and back-matter resources.
 
 ## Run
 
@@ -27,11 +27,11 @@ Open http://localhost:3000. Run `npm test` for the schema-validation and profile
 3. Select a JSON `*_profile.json` document in the workspace, for example `NIST_SP-800-53_rev5_LOW-baseline_profile.json`. No pre-resolution step is needed to view its selected controls.
 4. The viewer follows JSON catalogue/profile imports and preserves source groups and grey matter. It reports missing files or unsupported operations explicitly.
 
-The NIST Rev. 5 LOW unresolved profile was checked against its full source catalogue: all 149 listed controls were selected across 18 groups. This verifies that baseline's imports and selection, not general resolver conformance. JSON files for other OSCAL models and non-JSON files are skipped during folder loading. Invalid JSON is reported. Current NIST documents still carry the version warning described below.
+The NIST Rev. 5 LOW unresolved profile was checked against its full source catalogue: all 149 listed controls were selected across 18 groups. This verifies that baseline's imports and selection, not general resolver conformance. Mapping collections are also loaded; JSON files for other OSCAL models and non-JSON files are skipped during folder loading. Invalid JSON is reported. Current NIST documents still carry the version warning described below.
 
 ## Validation scope
 
-Bundled, unmodified NIST **OSCAL 1.0.4** catalogue and profile JSON Schemas are checked using Ajv 8.17.1. Missing fields, types, patterns, prohibited properties and duplicate identifiers are reported. URI, URI-reference, email and date-time formats use lightweight application checks; they are not exhaustive RFC validators. Newer OSCAL declarations produce a version warning: passing the old schema does **not** establish conformance with a newer release. XML and YAML are not accepted.
+Bundled, unmodified NIST **OSCAL 1.0.4** catalogue/profile and **OSCAL 1.2.3** mapping JSON Schemas are checked using Ajv 8.17.1. Missing fields, types, patterns, prohibited properties and duplicate identifiers are reported. URI, URI-reference, email and date-time formats use lightweight application checks; they are not exhaustive RFC validators. OSCAL declarations that differ from the applicable bundled schema version produce a version warning: passing a different version’s schema does **not** establish conformance with the declared release. XML and YAML are not accepted.
 
 Schema validity is distinct from profile processing and does not prove referential integrity, parameter constraint satisfaction or security compliance. This is an inspection tool, not a certification validator.
 
@@ -74,7 +74,9 @@ The sidebar's **Control sections** checkboxes show or hide each part type. Asses
 - `dist/parameters.mjs`: inline ODP substitution, scope inheritance and unset-value prompts.
 - `dist/engine.mjs`: schema validation and profile-selection logic.
 - `dist/imports.mjs`: folder loading, JSON resource selection and relative import resolution.
-- `dist/oscal_*_schema.json`: official NIST 1.0.4 schemas.
+- `dist/mappings.mjs`: mapping resource resolution and bidirectional control index.
+- `dist/provenance.mjs`: catalogue-to-profile comparison helpers.
+- `dist/oscal_*_schema.json`: official NIST 1.0.4 catalogue/profile and 1.2.3 mapping schemas.
 - `dist/ajv.js`: vendored Ajv browser bundle.
 - `server.cjs`: dependency-free local HTTP server.
 - `tests/*.cjs`: processing, validation, folder and NIST profile regression tests.
@@ -95,3 +97,17 @@ Source repository: https://github.com/mikekuk/oscal-lens
 - [Ajv 8.17.1 bundle](https://github.com/ajv-validator/ajv-dist/tree/v8.17.1), MIT; see `THIRD_PARTY_NOTICES.md`.
 
 The example catalogue is synthetic and is not an official NIST baseline. No assertion of full OSCAL resolver conformance is made.
+
+## Control mappings and profile provenance
+
+Open a common parent folder containing your catalogues, profiles and OSCAL mapping collections. Mapping files may be anywhere in that folder; the loader recognises the `mapping-collection` root, not a special filename or directory. It resolves each mapping's `source-resource.href` and `target-resource.href` relative to the mapping file, including JSON back-matter links, and builds a browser-local index after every file load or replacement.
+
+Select a referenced catalogue or profile to see **Mappings** within its controls. Each collapsed mapping shows the other resource, the target type (control or section/statement), the identifier and relationship. Expand it to read the explanation, provenance, mapped statement and full containing control. Both browsing directions are supported; subset/superset labels reverse with direction. Many-to-many entries retain their complete source and target sets and are labelled collective. Unknown/custom relationships retain their original direction and namespace. There is no recursive mapping expansion inside mapped controls.
+
+Only OSCAL `control` and `statement` target types are supported. Mapping collections are checked against the bundled, unmodified NIST OSCAL **1.2.3** mapping schema; invalid collections are reported and excluded from the control view. Catalogue/profile validation remains on 1.0.4. Missing or ambiguous files and identifiers produce notices rather than guessed matches. Referenced profiles retain the existing selection-preview limitations.
+
+Mappings attach to the exact referenced document. A mapping to a catalogue is not automatically applied to a profile importing it, nor to a different document with the same control IDs. A profile-specific mapping must reference that profile. No recorded mapping is not evidence of non-compliance or absence of a relationship.
+
+Profile views use lavender text and a dotted underline for effective changes from the original catalogue: modified titles/prose/metadata, added parts and changed parameter substitutions (including aggregate dependencies). Unchanged catalogue text retains its normal colour. The legend and hover text explain the distinction. Optional parameter details show changed definitions, and a **Profile removals** expander preserves removed catalogue content for inspection. Changes made by imported profile layers are included. Uploaded source JSON remains unchanged.
+
+The example workspace now includes an assurance catalogue and mapping collection. Everything remains within `dist/` for Azure Static Web Apps: no API, database, automatic source fetching or server-side processing is required.

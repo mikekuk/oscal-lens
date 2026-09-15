@@ -1,3 +1,4 @@
+import { buildMappingIndex } from './mappings.mjs';
 /** Browser state, event handling and startup. Pure HTML lives in views.mjs. */
 import {
   readDocuments
@@ -9,7 +10,9 @@ import {
 } from './engine.mjs';
 import {
   exampleCatalog,
-  exampleProfile
+  exampleProfile,
+  exampleMappedCatalog,
+  exampleMapping
 } from './examples.mjs';
 import {
   escapeHtml,
@@ -38,6 +41,11 @@ const sectionVisibility = {
 
 // A preview depends on the entire workspace, so any file load clears this cache.
 let previewCache = new WeakMap();
+let mappingCache;
+function cachedPreview(entry) {
+  if (!previewCache.has(entry.doc)) previewCache.set(entry.doc, preview(entry.doc, documents));
+  return previewCache.get(entry.doc);
+}
 
 function notice(message, isError = false) {
   select('#message').innerHTML = renderNotice(message, isError);
@@ -70,6 +78,10 @@ function renderWorkspace() {
     };
   }
 
+  mappingCache ||= buildMappingIndex(documents, cachedPreview, validate);
+  result = { ...result, rows: result.rows.map(row => ({ ...row,
+    mappings: mappingCache.index.get(entry.doc)?.get(row.control) || []
+  })), notes: [...new Set([...result.notes, ...(mappingCache.notices.get(entry.doc) || [])])] };
   const errorCount = issues.filter(issue => issue.severity === 'error').length;
   select('#doc-count').textContent = documents.length + ' files';
   select('#documents').innerHTML = renderDocuments(documents, currentDocumentIndex);
@@ -87,12 +99,14 @@ function renderWorkspace() {
 
   const panel = select('#panel');
   if (tab === 'validation') {
-    panel.innerHTML = renderValidation(issues, result, problem);
+    panel.innerHTML = renderValidation(issues, result, problem, type);
   } else if (tab === 'source') {
     panel.innerHTML = renderSource(entry.doc);
   } else if (tab === 'matter') {
     const roots = type === 'catalog' ? [body] : [body, ...result.sources];
     panel.innerHTML = renderGreyMatter(roots, group, problem);
+  } else if (type === 'mapping-collection') {
+    panel.innerHTML = renderNotice('Mappings are added automatically when you select a referenced catalogue or profile.') + result.notes.map(note => renderNotice(note, true)).join('') + renderSource(entry.doc);
   } else {
     const query = select('#search').value.trim().toLowerCase();
     panel.innerHTML = renderControls(type, result, problem, errorCount, group, query, sectionVisibility);
@@ -119,13 +133,15 @@ function render() {
 
 function loadDemo() {
   previewCache = new WeakMap();
+  mappingCache = undefined;
   documents = [{
     name: 'example-profile.json',
     doc: structuredClone(exampleProfile)
   }, {
     name: 'example-catalog.json',
     doc: structuredClone(exampleCatalog)
-  }];
+  }, {name: 'example-assurance.json', doc: structuredClone(exampleMappedCatalog)},
+  {name: 'example-mapping.json', doc: structuredClone(exampleMapping)}];
   currentDocumentIndex = 0;
   group = '';
   select('#search').value = '';
@@ -201,6 +217,7 @@ async function openDocuments(event, folder = false) {
     });
     documents = result.documents;
     previewCache = new WeakMap();
+    mappingCache = undefined;
     const existing = documents.findIndex(d => d.doc === previous);
     const firstProfile = documents.findIndex(d => model(d.doc).type === 'profile' && !d.name
       .startsWith('example-'));
@@ -226,8 +243,8 @@ select('#folder').onchange = event => openDocuments(event, true);
 
 // Compile bundled schemas once; individual validation results follow document identity.
 try {
-  const schemas = Object.fromEntries(await Promise.all(['catalog', 'profile'].map(async k => {
-    const r = await fetch(`oscal_${k}_schema.json`);
+  const schemas = Object.fromEntries(await Promise.all(['catalog', 'profile', 'mapping-collection'].map(async k => {
+    const r = await fetch(`oscal_${k === 'mapping-collection' ? 'mapping' : k}_schema.json`);
     if (!r.ok) throw Error('Cannot load bundled schema.');
     return [k, await r.json()]
   })));

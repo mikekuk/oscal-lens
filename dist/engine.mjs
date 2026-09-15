@@ -12,8 +12,8 @@ import {
 export function model(doc) {
   if (!doc || typeof doc !== 'object' || Array.isArray(doc)) throw Error(
     'Expected an OSCAL JSON object.');
-  const types = ['catalog', 'profile'].filter(k => doc[k]);
-  if (types.length !== 1) throw Error('Provide exactly one catalog or profile root.');
+  const types = ['catalog', 'profile', 'mapping-collection'].filter(k => doc[k]);
+  if (types.length !== 1) throw Error('Provide exactly one catalog, profile or mapping-collection root.');
   if (typeof doc[types[0]] !== 'object' || Array.isArray(doc[types[0]])) throw Error(
     'OSCAL root must be an object.');
   return {
@@ -83,6 +83,7 @@ export function makeValidator(Ajv, schemas) {
       }]
     }
     const v = validators[m.type];
+    if (!v) return [{ severity: 'warning', path: '/', message: 'No bundled schema for this document type.' }];
     v(doc);
     const issues = (v.errors || []).map(e => ({
       severity: 'error',
@@ -91,10 +92,11 @@ export function makeValidator(Ajv, schemas) {
         ')' : '')
     }));
     // Passing an older schema cannot establish conformance to a newer OSCAL version.
-    if (m.body.metadata?.['oscal-version'] !== '1.0.4') issues.unshift({
+    const schemaVersion = m.type === 'mapping-collection' ? '1.2.3' : '1.0.4';
+    if (m.body.metadata?.['oscal-version'] !== schemaVersion) issues.unshift({
       severity: 'warning',
       path: '/metadata/oscal-version',
-      message: 'Bundled schema is OSCAL 1.0.4. This document’s declared version is not supported for conformance validation.'
+      message: `Bundled schema is OSCAL ${schemaVersion}. This document’s declared version is not supported for conformance validation.`
     });
     // Namespace identifier checks by assembly type, preserving the existing policy.
     const seen = new Map();
@@ -161,6 +163,7 @@ export function preview(doc, documents, trail = []) {
     sources: [body],
     notes: []
   };
+  if (type === 'mapping-collection') return { rows: [], sources: [], notes: [] };
   if (trail.includes(doc)) throw Error('Circular profile import detected.');
   const rows = [],
     sources = [],
@@ -185,6 +188,8 @@ export function preview(doc, documents, trail = []) {
     // Tailoring must never mutate the uploaded catalogue or another profile view.
     rows.push(...selected.map(row => ({
       ...row,
+      baseControl: row.baseControl || clone(row.control),
+      baseParameters: row.baseParameters || clone(row.parameters || {}),
       control: clone(row.control),
       parameters: clone(row.parameters || {}),
       source: documentPath(target)

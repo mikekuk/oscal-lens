@@ -208,6 +208,7 @@ export function preview(doc, documents, trail = []) {
     // Tailoring must never mutate the uploaded catalogue or another profile view.
     rows.push(...selected.map(row => ({
       ...row,
+      lineage: [...(row.lineage || []), {doc: target.doc, controlId: row.control.id}],
       baseControl: row.baseControl || clone(row.control),
       baseParameters: row.baseParameters || clone(row.parameters || {}),
       control: clone(row.control),

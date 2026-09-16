@@ -24,6 +24,11 @@ export function locateItem(item, rows) {
 /** Build once per workspace load. Keep sets intact, and index both browsing directions. */
 export function buildMappingIndex(documents, getPreview = entry => preview(entry.doc, documents), validate) {
   const index = new Map(), notices = new Map();
+  const previews = new Map();
+  const readPreview = entry => {
+    if (!previews.has(entry.doc)) previews.set(entry.doc, getPreview(entry));
+    return previews.get(entry.doc);
+  };
   const addNotice = (doc, message) => notices.set(doc, [...(notices.get(doc) || []), message]);
   for (const collection of documents.filter(entry => entry.doc['mapping-collection'])) {
     const body = collection.doc['mapping-collection'];
@@ -39,7 +44,7 @@ export function buildMappingIndex(documents, getPreview = entry => preview(entry
           const entry = resolveImport(body, ref?.href, collection, documents);
           if (!['catalog', 'profile'].includes(model(entry.doc).type)) throw Error('Mapping resource must be a catalogue or profile.');
           if (ref.type !== model(entry.doc).type && !(ref.type === 'profile' && model(entry.doc).type === 'catalog')) throw Error('Mapping resource type does not match the loaded document.');
-          const result = getPreview(entry);
+          const result = readPreview(entry);
           return {entry, rows: result.rows, notes: result.notes, issues: validate ? validate(entry.doc) : []};
         } catch (error) { return {error: error.message, href: mapping[side + '-resource']?.href}; }
       });
@@ -63,7 +68,7 @@ export function buildMappingIndex(documents, getPreview = entry => preview(entry
           }
           for (const control of matchedRows) {
             const record = {
-              collection, mapping, map, ownItems, targets, other, reverse: !!side,
+              collection, mapping, map, ownItems, targets, other, local: local.entry, reverse: !!side,
               relationship: side ? reverseRelationship(map.relationship, map.ns) : map.relationship,
               rationale: map['matching-rationale'] || mapping['matching-rationale'] || body.provenance?.['matching-rationale'],
               status: mapping.status || body.provenance?.status,
@@ -75,5 +80,33 @@ export function buildMappingIndex(documents, getPreview = entry => preview(entry
       }
     }
   }
+  // Read only direct attachments so inheritance is independent of upload order
+  // and never leaks sideways into sibling profiles or unrelated catalogues.
+  const direct = new Map(index);
+  for (const entry of documents.filter(entry => entry.doc.profile)) {
+    let result;
+    try { result = readPreview(entry); } catch { continue; } // The profile view reports import failures.
+    const byControl = new Map(direct.get(entry.doc) || []);
+    for (const row of result.rows) {
+      const records = [...(byControl.get(row.control) || [])];
+      const seen = new Set(records);
+      for (const origin of row.lineage || []) {
+        for (const notice of notices.get(origin.doc) || []) addNotice(entry.doc, notice);
+        const sourceEntry = documents.find(candidate => candidate.doc === origin.doc);
+        const attachments = direct.get(origin.doc);
+        if (!sourceEntry || !attachments) continue;
+        const matches = readPreview(sourceEntry).rows.filter(source => source.control.id === origin.controlId);
+        if (matches.length !== 1) continue;
+        for (const record of attachments.get(matches[0].control) || []) {
+          if (seen.has(record)) continue;
+          seen.add(record);
+          records.push({...record, inheritedFrom: record.local});
+        }
+      }
+      if (records.length) byControl.set(row.control, records);
+    }
+    if (byControl.size) index.set(entry.doc, byControl);
+  }
+  for (const [doc, messages] of notices) notices.set(doc, [...new Set(messages)]);
   return {index, notices};
 }

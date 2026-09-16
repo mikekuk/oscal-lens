@@ -48,13 +48,13 @@ test('missing resources remain visible and duplicate file names do not silently 
   assert.equal(index.get(docs[0].doc).get(get(docs[0]).rows[0].control)[0].other.rows,undefined);
   assert.match(notices.get(docs[0].doc).join(' '),/Missing JSON import/);
 });
-test('folder loader accepts mapping collections; profiles only receive direct references',async()=>{
+test('folder loader accepts mapping collections; profiles receive inherited and direct references',async()=>{
   const [{preview},{buildMappingIndex},{readDocuments}] = await ready;
   const docs=workspace();const m=docs[2];
   const loaded=await readDocuments([{name:m.name,webkitRelativePath:m.path,size:100,text:async()=>JSON.stringify(m.doc)}],[],{folder:true});
   assert.equal(loaded.added,1);
   const p={name:'p.json',path:'root/profiles/p.json',doc:{profile:{imports:[{href:'../catalogs/a.json','include-all':{}}]}}};docs.push(p);
-  let get=cached(docs,preview);assert.equal(buildMappingIndex(docs,get).index.has(p.doc),false);
+  let get=cached(docs,preview);assert.equal(buildMappingIndex(docs,get).index.get(p.doc).size,1);
   m.doc['mapping-collection'].mappings[0]['source-resource']={type:'profile',href:'../profiles/p.json'};
   get=cached(docs,preview);assert.equal(buildMappingIndex(docs,get).index.get(p.doc).size,1);
 });
@@ -77,4 +77,58 @@ test('schema-invalid collections cannot attach misleading mapping content',async
   const result=buildMappingIndex(docs,get,validate);
   assert.equal(result.index.size,0);
   assert.match(result.notices.get(docs[0].doc).join(' '),/schema errors; mappings are not displayed/);
+});
+
+test('nested profiles combine multiple collections and direct maps without leaking to siblings', async () => {
+  const [{preview},{buildMappingIndex},,{renderControls}] = await ready;
+  const docs = workspace();
+  const second = structuredClone(docs[2]);
+  second.name = 'iso.json'; second.path = 'root/anywhere/iso.json';
+  second.doc['mapping-collection'].metadata = {title:'ISO mapping'};
+  const p = {name:'p.json',path:'root/profiles/p.json',doc:{profile:{imports:[{href:'../catalogs/b.json','include-all':{}}]}}};
+  const outer = {name:'outer.json',path:'root/profiles/outer.json',doc:{profile:{imports:[{href:'p.json','include-all':{}}]}}};
+  const direct = structuredClone(docs[2]);
+  direct.name = 'direct.json'; direct.path = 'root/anywhere/direct.json';
+  direct.doc['mapping-collection'].mappings[0]['target-resource'] = {type:'profile',href:'../profiles/p.json'};
+  const sibling = {name:'sibling.json',path:'root/profiles/sibling.json',doc:{profile:{imports:[{href:'../catalogs/b.json','include-all':{}}]}}};
+  const unrelated = {name:'unrelated.json',path:'root/catalogs/unrelated.json',doc:structuredClone(docs[1].doc)};
+  const wrong = {name:'wrong.json',path:'root/profiles/wrong.json',doc:{profile:{imports:[{href:'../catalogs/unrelated.json','include-all':{}}]}}};
+  docs.unshift(outer); docs.push(second,p,direct,sibling,unrelated,wrong);
+  for (const ordered of [docs,[...docs].reverse()]) {
+    const get = cached(ordered,preview), {index} = buildMappingIndex(ordered,get);
+    const records = entry => index.get(entry.doc)?.get(get(entry).rows[0].control) || [];
+    assert.equal(records(p).length,3);
+    assert.equal(records(p).filter(r=>r.inheritedFrom).length,2);
+    assert.equal(records(outer).length,3);
+    assert.equal(records(sibling).length,2);
+    assert.equal(records(wrong).length,0);
+    assert.ok(records(outer).every(r=>r.relationship === 'superset-of' && r.inheritedFrom));
+    const result = get(outer);
+    result.rows[0].mappings = records(outer);
+    const html = renderControls('profile',result,null,0,'','');
+    assert.match(html,/Mappings \(3\)/);
+    assert.match(html,/ISO mapping/);
+    assert.match(html,/Inherited from root\/catalogs\/b.json/);
+    assert.match(html,/Inherited from root\/profiles\/p.json/);
+    assert.match(html,/Target full statement &lt;script&gt;/);
+  }
+});
+
+test('selection, removed statements, invalid collections and replacement retain safe inheritance', async () => {
+  const [{preview},{buildMappingIndex}] = await ready;
+  const docs = workspace();
+  const p = {name:'p.json',path:'root/profiles/p.json',doc:{profile:{imports:[{href:'../catalogs/a.json','include-all':{}}],modify:{alters:[{'control-id':'a',removes:[{'by-id':'a.s'}]}]}}}};
+  const excluded = {name:'excluded.json',path:'root/profiles/excluded.json',doc:{profile:{imports:[{href:'../catalogs/a.json','include-all':{},'exclude-controls':[{'with-ids':['a']}]}]}}};
+  docs.push(p,excluded);
+  let get = cached(docs,preview), result = buildMappingIndex(docs,get);
+  assert.equal(get(p).rows[0].control.parts?.length || 0,0);
+  assert.equal(result.index.get(p.doc).get(get(p).rows[0].control).length,1);
+  assert.equal(result.index.has(excluded.doc),false);
+  assert.equal(docs[0].doc.catalog.controls[0].parts.length,1);
+  result = buildMappingIndex(docs,get,doc=>doc['mapping-collection'] ? [{severity:'error'}] : []);
+  assert.equal(result.index.has(p.doc),false);
+  assert.match(result.notices.get(p.doc).join(' '),/schema errors/);
+  docs[2].doc['mapping-collection'].mappings = [];
+  get = cached(docs,preview); result = buildMappingIndex(docs,get);
+  assert.equal(result.index.has(p.doc),false);
 });

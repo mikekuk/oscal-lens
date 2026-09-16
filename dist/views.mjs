@@ -257,6 +257,7 @@ function renderMappings(records = [], visibility) {
     const collective = record.ownItems.length > 1 || record.targets.length > 1;
     return `<details class="mapping"><summary><span class="badge">${escapeHtml(record.relationship || 'Relationship unspecified')}</span><strong>${escapeHtml(title)}</strong><span class="mapping-targets">${escapeHtml(targets)}</span></summary>
       <div class="mapping-detail"><p><strong>This side:</strong> ${escapeHtml(record.ownItems.map(itemLabel).join('; '))}</p>
+      ${record.inheritedFrom ? renderNotice('Inherited from ' + documentPath(record.inheritedFrom) + '. This mapping describes the source content; profile tailoring does not reassess the relationship.') : ''}
       <p><strong>Relationship:</strong> ${escapeHtml(record.relationship)}${map.ns ? ' · namespace: ' + escapeHtml(map.ns) : ''}${record.rationale ? ' · ' + escapeHtml(record.rationale) + ' comparison' : ''}</p>
       ${collective ? '<p class="notice">This relationship applies to the complete sets listed on each side, collectively.</p>' : ''}
       <p class="mapping-provenance">${escapeHtml(collection.doc['mapping-collection'].metadata?.title || collection.name)} · ${escapeHtml(documentPath(collection))}${record.status ? ' · ' + escapeHtml(record.status) : ''}${otherBody?.metadata?.version ? ' · Referenced version ' + escapeHtml(otherBody.metadata.version) : ''}</p>

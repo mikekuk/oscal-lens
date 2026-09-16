@@ -51,8 +51,8 @@ test('NIST schemas validate catalogue and profile and reject missing metadata', 
     makeValidator
   } = await ready;
   const validate = makeValidator(Ajv, {
-    catalog: require('../dist/oscal_catalog_schema.json'),
-    profile: require('../dist/oscal_profile_schema.json')
+    'catalog@1.0.4': require('../dist/schemas/1.0.4/oscal_catalog_schema.json'),
+    'profile@1.0.4': require('../dist/schemas/1.0.4/oscal_profile_schema.json')
   });
   assert.deepEqual(validate(catalog), []);
   assert.deepEqual(validate(profile({

@@ -31,7 +31,18 @@ The NIST Rev. 5 LOW unresolved profile was checked against its full source catal
 
 ## Validation scope
 
-Bundled, unmodified NIST **OSCAL 1.0.4** catalogue/profile and **OSCAL 1.2.3** mapping JSON Schemas are checked using Ajv 8.17.1. Missing fields, types, patterns, prohibited properties and duplicate identifiers are reported. URI, URI-reference, email and date-time formats use lightweight application checks; they are not exhaustive RFC validators. OSCAL declarations that differ from the applicable bundled schema version produce a version warning: passing a different version’s schema does **not** establish conformance with the declared release. XML and YAML are not accepted.
+Bundled, unmodified NIST JSON Schemas are selected using each document's `metadata.oscal-version` and checked using Ajv 8.17.1:
+
+| Model | Bundled OSCAL versions |
+| --- | --- |
+| Catalogue and profile | 1.0.0–1.0.6, 1.1.0–1.1.3, 1.2.0–1.2.3 |
+| Mapping collection | 1.2.0–1.2.3 |
+
+NIST marks 1.0.5 as a pre-release; it is included for documents declaring that version. Its published schema has known overly restrictive property-name constraints, corrected upstream in 1.0.6. The exact schema for the declared release is used, including its original constraints and upstream limitations. Missing or malformed version declarations produce an error. Unbundled versions produce a **Schema not checked** notice; another release is never silently substituted. Future releases require adding their official schema assets and entries to `dist/schemas/manifest.json`.
+
+The Validation tab identifies the selected schema version. Missing fields, types, patterns, prohibited properties and duplicate identifiers are reported. URI, URI-reference, email and date-time formats use lightweight application checks; they are not exhaustive RFC validators. XML and YAML are not accepted.
+
+All schemas are served from the same static site; uploaded content is never sent to NIST or a validation service. Validators compile on first use and are cached separately by model and version. The manifest records source URLs and SHA-256 checksums; source schemas are kept unmodified.
 
 Schema validity is distinct from profile processing and does not prove referential integrity, parameter constraint satisfaction or security compliance. This is an inspection tool, not a certification validator.
 
@@ -76,7 +87,7 @@ The sidebar's **Control sections** checkboxes show or hide each part type. Asses
 - `dist/imports.mjs`: folder loading, JSON resource selection and relative import resolution.
 - `dist/mappings.mjs`: mapping resource resolution and bidirectional control index.
 - `dist/provenance.mjs`: catalogue-to-profile comparison helpers.
-- `dist/oscal_*_schema.json`: official NIST 1.0.4 catalogue/profile and 1.2.3 mapping schemas.
+- `dist/schemas/`: versioned official NIST schemas and their source/checksum manifest.
 - `dist/ajv.js`: vendored Ajv browser bundle.
 - `server.cjs`: dependency-free local HTTP server.
 - `tests/*.cjs`: processing, validation, folder and NIST profile regression tests.
@@ -93,7 +104,7 @@ Source repository: https://github.com/mikekuk/oscal-lens
 
 - [NIST OSCAL](https://pages.nist.gov/OSCAL/)
 - [Profile processing specification](https://pages.nist.gov/OSCAL/learn/concepts/processing/profile-resolution/)
-- [NIST 1.0.4 schema source](https://github.com/usnistgov/OSCAL/tree/v1.0.4/json/schema)
+- [NIST OSCAL schema releases](https://github.com/usnistgov/OSCAL/releases)
 - [Ajv 8.17.1 bundle](https://github.com/ajv-validator/ajv-dist/tree/v8.17.1), MIT; see `THIRD_PARTY_NOTICES.md`.
 
 The example catalogue is synthetic and is not an official NIST baseline. No assertion of full OSCAL resolver conformance is made.
@@ -104,7 +115,7 @@ Open a common parent folder containing your catalogues, profiles and OSCAL mappi
 
 Select a referenced catalogue or profile to see **Mappings** within its controls. Each collapsed mapping shows the other resource, the target type (control or section/statement), the identifier and relationship. Expand it to read the explanation, provenance, mapped statement and full containing control. Both browsing directions are supported; subset/superset labels reverse with direction. Many-to-many entries retain their complete source and target sets and are labelled collective. Unknown/custom relationships retain their original direction and namespace. There is no recursive mapping expansion inside mapped controls.
 
-Only OSCAL `control` and `statement` target types are supported. Mapping collections are checked against the bundled, unmodified NIST OSCAL **1.2.3** mapping schema; invalid collections are reported and excluded from the control view. Catalogue/profile validation remains on 1.0.4. Missing or ambiguous files and identifiers produce notices rather than guessed matches. Referenced profiles retain the existing selection-preview limitations.
+Only OSCAL `control` and `statement` target types are supported. Mapping collections are checked against the bundled NIST schema matching their declared version (1.2.0–1.2.3); invalid collections and collections without a matching schema are reported and excluded from the control view. Catalogue/profile validation supports the versions listed above. Missing or ambiguous files and identifiers produce notices rather than guessed matches. Referenced profiles retain the existing selection-preview limitations.
 
 Mappings attach to the exact referenced document. A mapping to a catalogue is not automatically applied to a profile importing it, nor to a different document with the same control IDs. A profile-specific mapping must reference that profile. No recorded mapping is not evidence of non-compliance or absence of a relationship.
 

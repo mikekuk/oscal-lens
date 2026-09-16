@@ -27,8 +27,10 @@ export function buildMappingIndex(documents, getPreview = entry => preview(entry
   const addNotice = (doc, message) => notices.set(doc, [...(notices.get(doc) || []), message]);
   for (const collection of documents.filter(entry => entry.doc['mapping-collection'])) {
     const body = collection.doc['mapping-collection'];
-    const errors = validate ? validate(collection.doc).filter(issue => issue.severity === 'error') : [];
-    const invalid = errors.length ? `${documentPath(collection)}: ${errors.length} schema errors; mappings are not displayed. Select the mapping file’s Validation tab for details.` : '';
+    const issues = validate ? validate(collection.doc) : [];
+    const errors = issues.filter(issue => issue.severity === 'error');
+    const invalid = errors.length ? `${documentPath(collection)}: ${errors.length} schema errors; mappings are not displayed. Select the mapping file’s Validation tab for details.` : issues.some(issue => issue.code === 'schema-unavailable')
+      ? `${documentPath(collection)}: no matching schema; mappings are not displayed. Select the mapping file’s Validation tab for details.` : '';
     if (invalid) addNotice(collection.doc, invalid);
     for (const mapping of list(body.mappings)) {
       const resources = ['source', 'target'].map(side => {

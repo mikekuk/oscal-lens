@@ -60,7 +60,7 @@ test('folder loader accepts mapping collections; profiles only receive direct re
 });
 test('standard mapping schema accepts control/statement and flags parameter extension',async()=>{
   const [{makeValidator}] = await ready;
-  const validate=makeValidator(require('../dist/ajv.js'),{'mapping-collection':require('../dist/oscal_mapping_schema.json')});
+  const validate=makeValidator(require('../dist/ajv.js'),{'mapping-collection@1.2.3':require('../dist/schemas/1.2.3/oscal_mapping_schema.json')});
   const docs=workspace(), body=docs[2].doc['mapping-collection'];
   const uuid='4f431eaf-77a0-47bb-9aca-ae15496bf210';
   Object.assign(body,{uuid,metadata:{title:'Mapping','last-modified':'2026-09-15T00:00:00Z',version:'1','oscal-version':'1.2.3'},provenance:{method:'human','matching-rationale':'semantic',status:'draft','mapping-description':'Illustrative'}});

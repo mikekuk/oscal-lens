@@ -42,35 +42,47 @@ export function flatten(root) {
   return rows;
 }
 
-/** Compile schemas once, then return all schema and identifier issues per document. */
+/** Select the declared release exactly; compile each bundled schema only when used. */
 export function makeValidator(Ajv, schemas) {
-  const ajv = new Ajv({
-    allErrors: true,
-    strict: false
-  });
-  // Lightweight format checks supplement the patterns in the bundled NIST schemas.
-  // They are deliberately not described as exhaustive RFC conformance checks.
-  ajv.addFormat('uri', s => {
-    try {
-      return !!new URL(s).protocol && !/\s/.test(s)
-    } catch {
-      return false
+  function compile(schema) {
+    // Isolate releases: older NIST schemas reuse fragment identifiers.
+    const ajv = new Ajv({
+      allErrors: true,
+      strict: false
+    });
+    // Lightweight format checks supplement the patterns in the bundled NIST schemas.
+    // They are deliberately not described as exhaustive RFC conformance checks.
+    ajv.addFormat('uri', s => {
+      try {
+        return !!new URL(s).protocol && !/\s/.test(s)
+      } catch {
+        return false
+      }
+    });
+    ajv.addFormat('uri-reference', s => {
+      try {
+        new URL(s, 'https://example.org/');
+        return !/[\s<>]/.test(s)
+      } catch {
+        return false
+      }
+    });
+    ajv.addFormat('email', /^[^\s@]+@[^\s@]+\.[^\s@]+$/);
+    ajv.addFormat('date-time', s =>
+      /^\d{4}-\d\d-\d\d[Tt]\d\d:\d\d:\d\d(?:\.\d+)?(?:[Zz]|[+-]\d\d:\d\d)$/.test(s) && !Number
+      .isNaN(Date.parse(s)));
+    return ajv.compile(schema);
+  }
+  const available = new Map();
+  // Release keys come from the manifest, not $id: some NIST releases
+  // retain an earlier release's $id in their published schemas.
+  for (const [key, schema] of Object.entries(schemas)) {
+    if (!/^(catalog|profile|mapping-collection)@1\.\d+\.\d+$/.test(key)) {
+      throw Error(`Invalid bundled schema key: ${key}`);
     }
-  });
-  ajv.addFormat('uri-reference', s => {
-    try {
-      new URL(s, 'https://example.org/');
-      return !/[\s<>]/.test(s)
-    } catch {
-      return false
-    }
-  });
-  ajv.addFormat('email', /^[^\s@]+@[^\s@]+\.[^\s@]+$/);
-  ajv.addFormat('date-time', s =>
-    /^\d{4}-\d\d-\d\d[Tt]\d\d:\d\d:\d\d(?:\.\d+)?(?:[Zz]|[+-]\d\d:\d\d)$/.test(s) && !Number
-    .isNaN(Date.parse(s)));
-  const validators = Object.fromEntries(Object.entries(schemas).map(([k, s]) => [k, ajv.compile(
-    s)]));
+    available.set(key, schema);
+  }
+  const validators = new Map();
   return doc => {
     let m;
     try {
@@ -82,22 +94,30 @@ export function makeValidator(Ajv, schemas) {
         message: e.message
       }]
     }
-    const v = validators[m.type];
-    if (!v) return [{ severity: 'warning', path: '/', message: 'No bundled schema for this document type.' }];
-    v(doc);
-    const issues = (v.errors || []).map(e => ({
-      severity: 'error',
-      path: e.instancePath || '/',
-      message: e.message + (e.params?.missingProperty ? ' (' + e.params.missingProperty +
-        ')' : '')
-    }));
-    // Passing an older schema cannot establish conformance to a newer OSCAL version.
-    const schemaVersion = m.type === 'mapping-collection' ? '1.2.3' : '1.0.4';
-    if (m.body.metadata?.['oscal-version'] !== schemaVersion) issues.unshift({
-      severity: 'warning',
-      path: '/metadata/oscal-version',
-      message: `Bundled schema is OSCAL ${schemaVersion}. This document’s declared version is not supported for conformance validation.`
-    });
+    const version = m.body.metadata?.['oscal-version'];
+    const key = `${m.type}@${version}`;
+    const schema = typeof version === 'string' && available.get(key);
+    const issues = [];
+    if (!schema) {
+      const validVersion = typeof version === 'string' && /^\d+\.\d+\.\d+$/.test(version);
+      issues.push({
+        severity: validVersion ? 'warning' : 'error',
+        code: 'schema-unavailable',
+        path: `/${m.type}/metadata/oscal-version`,
+        message: validVersion
+          ? `No bundled ${m.type} schema for OSCAL ${version}. Schema validation was not performed; no other release was substituted.`
+          : 'A metadata.oscal-version in major.minor.patch form is required to select a schema. Schema validation was not performed.'
+      });
+    } else {
+      if (!validators.has(key)) validators.set(key, compile(schema));
+      const v = validators.get(key);
+      v(doc);
+      issues.push(...(v.errors || []).map(e => ({
+        severity: 'error',
+        path: e.instancePath || '/',
+        message: e.message + (e.params?.missingProperty ? ' (' + e.params.missingProperty + ')' : '')
+      })));
+    }
     // Namespace identifier checks by assembly type, preserving the existing policy.
     const seen = new Map();
 

@@ -28,12 +28,12 @@ SOFTWARE.
 
 ## NIST OSCAL schemas
 
-Unmodified OSCAL 1.0.4 schemas, authored by the US National Institute of Standards and Technology. See https://github.com/usnistgov/OSCAL/blob/v1.0.4/LICENSE.md for NIST terms.
+Unmodified NIST OSCAL catalogue/profile JSON Schemas for 1.0.0–1.0.6,
+1.1.0–1.1.3 and 1.2.0–1.2.3, and mapping JSON Schemas for 1.2.0–1.2.3,
+authored by the US National Institute of Standards and Technology.
+NIST marks 1.0.5 as a pre-release.
 
-## OSCAL 1.2.3 mapping schema
-
-`dist/oscal_mapping_schema.json` is the unmodified NIST OSCAL mapping JSON Schema downloaded from:
-https://github.com/usnistgov/OSCAL/releases/download/v1.2.3/oscal_mapping_schema.json
-
-NIST OSCAL project: https://github.com/usnistgov/OSCAL
-The schema retains its original embedded copyright and licence notice.
+`dist/schemas/manifest.json` records each schema's release, original download
+URL and SHA-256 checksum. Each schema retains its embedded copyright and
+licence notice. See https://github.com/usnistgov/OSCAL/blob/v1.2.3/LICENSE.md
+for NIST terms and https://github.com/usnistgov/OSCAL/releases for releases.

@@ -143,7 +143,7 @@ export function renderHeading(entry, type, body, result, issues) {
   const groupCount = new Set(result.rows.flatMap(row => row.groups.map(group => group.id || group.title)))
     .size;
   const errorCount = issues.filter(issue => issue.severity === 'error').length;
-  const status = errorCount ? `${errorCount} validation errors` : issues.length ? 'Version notice' :
+  const status = errorCount ? `${errorCount} validation errors` : issues.some(issue => issue.code === 'schema-unavailable') ? 'Schema not checked' : issues.length ? 'Validation notice' :
     'Schema checks passed';
   return `<div>
     <p class="eyebrow">${type === 'profile' ? 'PROFILE SELECTION PREVIEW' : type === 'mapping-collection' ? 'MAPPING COLLECTION' : 'CATALOGUE'}</p>
@@ -166,14 +166,17 @@ export function renderGroups(sources, result, selectedGroup) {
   }).join('') || '<p class="side-foot">No source groups</p>';
 }
 
-export function renderValidation(issues, result, problem, type = 'catalog') {
+export function renderValidation(issues, result, problem, type = 'catalog', version) {
+  const schemaStatus = issues.some(issue => issue.code === 'schema-unavailable')
+    ? 'No matching bundled schema was available; schema validation was not performed. Identifier checks are reported below.'
+    : `Checked against bundled NIST OSCAL ${escapeHtml(version)} ${escapeHtml(type)} JSON Schema, with identifier checks.`;
   const report = issues.length ? issues.map(issue => `<div class="issue">
     <span class="badge warn">${escapeHtml(issue.severity)}</span>
     <code>${escapeHtml(issue.path)}</code>${escapeHtml(issue.message)}
   </div>`).join('') : '<p>Schema and identifier checks passed.</p>';
   return `<div class="matter-block">
     <h3>Validation report</h3>
-    <p>Checked against bundled NIST OSCAL ${type === 'mapping-collection' ? '1.2.3 mapping' : '1.0.4 catalogue/profile'} JSON Schema, with identifier checks. Profile processing is reported separately.</p>
+    <p>${schemaStatus} Profile processing is reported separately.</p>
     ${report}
   </div>${renderProcessingNotes(result, problem)}`;
 }

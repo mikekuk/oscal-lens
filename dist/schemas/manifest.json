@@ -1,0 +1,240 @@
+[
+  {
+    "type": "catalog",
+    "version": "1.0.0",
+    "path": "schemas/1.0.0/oscal_catalog_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.0/oscal_catalog_schema.json",
+    "sha256": "622b96ca950656d56ea184b080929a6a079d49db50011d7f2c362b268b962d42"
+  },
+  {
+    "type": "profile",
+    "version": "1.0.0",
+    "path": "schemas/1.0.0/oscal_profile_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.0/oscal_profile_schema.json",
+    "sha256": "4efd7cc88e8eb77896574dc23404df20ae623b8c2c0b11927559f707fe0ca33a"
+  },
+  {
+    "type": "catalog",
+    "version": "1.0.1",
+    "path": "schemas/1.0.1/oscal_catalog_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.1/oscal_catalog_schema.json",
+    "sha256": "622b96ca950656d56ea184b080929a6a079d49db50011d7f2c362b268b962d42"
+  },
+  {
+    "type": "profile",
+    "version": "1.0.1",
+    "path": "schemas/1.0.1/oscal_profile_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.1/oscal_profile_schema.json",
+    "sha256": "4efd7cc88e8eb77896574dc23404df20ae623b8c2c0b11927559f707fe0ca33a"
+  },
+  {
+    "type": "catalog",
+    "version": "1.0.2",
+    "path": "schemas/1.0.2/oscal_catalog_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.2/oscal_catalog_schema.json",
+    "sha256": "34e60e908a31dc40f30308a90d1a5727bc709b2c7149ea76d3232268fbad9759"
+  },
+  {
+    "type": "profile",
+    "version": "1.0.2",
+    "path": "schemas/1.0.2/oscal_profile_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.2/oscal_profile_schema.json",
+    "sha256": "9c1a2830c32f0d2dc2bd10f2f4667751fe718f7425d6c01a2075728ac3fa1531"
+  },
+  {
+    "type": "catalog",
+    "version": "1.0.3",
+    "path": "schemas/1.0.3/oscal_catalog_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.3/oscal_catalog_schema.json",
+    "sha256": "42ebb82bb6c4b8ee18f7f29f479997f60d07a0f0d89db6c4947a9d1036b8a78a"
+  },
+  {
+    "type": "profile",
+    "version": "1.0.3",
+    "path": "schemas/1.0.3/oscal_profile_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.3/oscal_profile_schema.json",
+    "sha256": "b954d19effee74fb457bc04393d0a2c23fc80625e746205e1f571b8fb9858960"
+  },
+  {
+    "type": "catalog",
+    "version": "1.0.4",
+    "path": "schemas/1.0.4/oscal_catalog_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.4/oscal_catalog_schema.json",
+    "sha256": "ff3f66f879340ac3c35e03561d4b6ce2948aad7b87f993b6d4e647141bf848b3"
+  },
+  {
+    "type": "profile",
+    "version": "1.0.4",
+    "path": "schemas/1.0.4/oscal_profile_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.4/oscal_profile_schema.json",
+    "sha256": "013288f650344a42574ad635c70415d4fa77f6f2f53a81b38809c78b0fc968c9"
+  },
+  {
+    "type": "catalog",
+    "version": "1.0.5",
+    "path": "schemas/1.0.5/oscal_catalog_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.5/oscal_catalog_schema.json",
+    "sha256": "2a0ea3628809d363d796dcccac82a43e56e397291f6ab904d4df6c44eaf251a0"
+  },
+  {
+    "type": "profile",
+    "version": "1.0.5",
+    "path": "schemas/1.0.5/oscal_profile_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.5/oscal_profile_schema.json",
+    "sha256": "27d8c13b313cc2a79f3fe81b01f5953daa5a15c29dfa01fb34f9e484a97a67e2"
+  },
+  {
+    "type": "catalog",
+    "version": "1.0.6",
+    "path": "schemas/1.0.6/oscal_catalog_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.6/oscal_catalog_schema.json",
+    "sha256": "38ec593fbc020d164d85db67e4f6b5532788f5e4f26de33e6448b3abe7610a2b"
+  },
+  {
+    "type": "profile",
+    "version": "1.0.6",
+    "path": "schemas/1.0.6/oscal_profile_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.6/oscal_profile_schema.json",
+    "sha256": "0fb18c4c00f8509dbec8847a7d1b7479ddb72b32ddb2f987619d7a179eac8d64"
+  },
+  {
+    "type": "catalog",
+    "version": "1.1.0",
+    "path": "schemas/1.1.0/oscal_catalog_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.0/oscal_catalog_schema.json",
+    "sha256": "936c53978eb47880dfa8b471640ae09b111b38d837686022ef7db07e26fa629d"
+  },
+  {
+    "type": "profile",
+    "version": "1.1.0",
+    "path": "schemas/1.1.0/oscal_profile_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.0/oscal_profile_schema.json",
+    "sha256": "e40698f88744d07ff4d06512d7359b18c10bf15ca97de6ce0b61d53bd82d19af"
+  },
+  {
+    "type": "catalog",
+    "version": "1.1.1",
+    "path": "schemas/1.1.1/oscal_catalog_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.1/oscal_catalog_schema.json",
+    "sha256": "90fb059843026fcc99d38dfd1102ea4bc12d0f43a443ba79aa7d6ce3df6a9100"
+  },
+  {
+    "type": "profile",
+    "version": "1.1.1",
+    "path": "schemas/1.1.1/oscal_profile_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.1/oscal_profile_schema.json",
+    "sha256": "067c7da65da2a90017d9f42a81d4a9d73d1dba56990e2a0bf86c438dc167e241"
+  },
+  {
+    "type": "catalog",
+    "version": "1.1.2",
+    "path": "schemas/1.1.2/oscal_catalog_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.2/oscal_catalog_schema.json",
+    "sha256": "5b069afa4f4ecc38d59914dab56098566d4247d3578a2123c030c80d36fc5104"
+  },
+  {
+    "type": "profile",
+    "version": "1.1.2",
+    "path": "schemas/1.1.2/oscal_profile_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.2/oscal_profile_schema.json",
+    "sha256": "c910ea1a852e9d4ccfb7f6a8d0898b0cd4f137e48f88886412a083c8d87d540a"
+  },
+  {
+    "type": "catalog",
+    "version": "1.1.3",
+    "path": "schemas/1.1.3/oscal_catalog_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.3/oscal_catalog_schema.json",
+    "sha256": "5e120afbd14c480a9498ab6388857ef32b3b880e458525e966ff7c7f59333d90"
+  },
+  {
+    "type": "profile",
+    "version": "1.1.3",
+    "path": "schemas/1.1.3/oscal_profile_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.3/oscal_profile_schema.json",
+    "sha256": "d14c99b4bc48cb1ef370cd27a78c23e04bab847e737e11f478b37714db30851b"
+  },
+  {
+    "type": "catalog",
+    "version": "1.2.0",
+    "path": "schemas/1.2.0/oscal_catalog_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.0/oscal_catalog_schema.json",
+    "sha256": "af169d9279c378282b00255f38f09629dcf5026a90252663d7840ed5cb056f77"
+  },
+  {
+    "type": "mapping-collection",
+    "version": "1.2.0",
+    "path": "schemas/1.2.0/oscal_mapping_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.0/oscal_mapping_schema.json",
+    "sha256": "5f2cf59dc59f1d4d303f215326e6b28277224c79c3ca5089690d44ab8d65a85d"
+  },
+  {
+    "type": "profile",
+    "version": "1.2.0",
+    "path": "schemas/1.2.0/oscal_profile_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.0/oscal_profile_schema.json",
+    "sha256": "f9434f6a86f437b62041bb7330c1bab2c95cce016d7267342ce215d8af442e40"
+  },
+  {
+    "type": "catalog",
+    "version": "1.2.1",
+    "path": "schemas/1.2.1/oscal_catalog_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.1/oscal_catalog_schema.json",
+    "sha256": "c0ae626d6bafe318db68692152d0cbbebf29ba7226b1596a5513cc5d1754504d"
+  },
+  {
+    "type": "mapping-collection",
+    "version": "1.2.1",
+    "path": "schemas/1.2.1/oscal_mapping_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.1/oscal_mapping_schema.json",
+    "sha256": "5b8f6f9b8117bb42ad8466d11d1695f0be9cc31350c2a3aea770614d96d70d3f"
+  },
+  {
+    "type": "profile",
+    "version": "1.2.1",
+    "path": "schemas/1.2.1/oscal_profile_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.1/oscal_profile_schema.json",
+    "sha256": "3b92e83ef9043af573ca81a451f899adf6855440b0974fb448b9c635fead7983"
+  },
+  {
+    "type": "catalog",
+    "version": "1.2.2",
+    "path": "schemas/1.2.2/oscal_catalog_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.2/oscal_catalog_schema.json",
+    "sha256": "fdc559f5dff6848b1ebbe1898a69cc08263479f7c796e2f056412059e7489d0c"
+  },
+  {
+    "type": "mapping-collection",
+    "version": "1.2.2",
+    "path": "schemas/1.2.2/oscal_mapping_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.2/oscal_mapping_schema.json",
+    "sha256": "45b4f909f72e17fbe8476e2a7f3d9f64ec42dc26ab2fe2d56c6b44fc57346022"
+  },
+  {
+    "type": "profile",
+    "version": "1.2.2",
+    "path": "schemas/1.2.2/oscal_profile_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.2/oscal_profile_schema.json",
+    "sha256": "04329bd68032f48825f712f79576b3fd00e129e59d3597beb56ed72c17277f66"
+  },
+  {
+    "type": "catalog",
+    "version": "1.2.3",
+    "path": "schemas/1.2.3/oscal_catalog_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.3/oscal_catalog_schema.json",
+    "sha256": "ab95836e9e8dfeb6fde80007f6cc76fa3192f595d427c751a3f3923c3f474fc2"
+  },
+  {
+    "type": "mapping-collection",
+    "version": "1.2.3",
+    "path": "schemas/1.2.3/oscal_mapping_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.3/oscal_mapping_schema.json",
+    "sha256": "ed28b68c8e56cc7d39f0c6076a5d7da3e8100fbe25abf5bb731120bd34f8817e"
+  },
+  {
+    "type": "profile",
+    "version": "1.2.3",
+    "path": "schemas/1.2.3/oscal_profile_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.3/oscal_profile_schema.json",
+    "sha256": "7c5ff5a92683b6a80ce6a3474dea04e0ea8680a4ecb60702ffa08ebfc677e6cb"
+  }
+]

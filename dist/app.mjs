@@ -99,7 +99,7 @@ function renderWorkspace() {
 
   const panel = select('#panel');
   if (tab === 'validation') {
-    panel.innerHTML = renderValidation(issues, result, problem, type);
+    panel.innerHTML = renderValidation(issues, result, problem, type, body.metadata?.['oscal-version']);
   } else if (tab === 'source') {
     panel.innerHTML = renderSource(entry.doc);
   } else if (tab === 'matter') {
@@ -241,12 +241,15 @@ async function openDocuments(event, folder = false) {
 select('#files').onchange = event => openDocuments(event);
 select('#folder').onchange = event => openDocuments(event, true);
 
-// Compile bundled schemas once; individual validation results follow document identity.
+// Load same-origin, pinned schemas; compilation and results are cached on demand.
 try {
-  const schemas = Object.fromEntries(await Promise.all(['catalog', 'profile', 'mapping-collection'].map(async k => {
-    const r = await fetch(`oscal_${k === 'mapping-collection' ? 'mapping' : k}_schema.json`);
-    if (!r.ok) throw Error('Cannot load bundled schema.');
-    return [k, await r.json()]
+  const response = await fetch('schemas/manifest.json');
+  if (!response.ok) throw Error('Cannot load bundled schema manifest.');
+  const manifest = await response.json();
+  const schemas = Object.fromEntries(await Promise.all(manifest.map(async ({type, version, path}) => {
+    const r = await fetch(path);
+    if (!r.ok) throw Error(`Cannot load bundled OSCAL ${version} ${type} schema.`);
+    return [`${type}@${version}`, await r.json()];
   })));
   const check = makeValidator(window.ajv7, schemas),
     cache = new WeakMap();

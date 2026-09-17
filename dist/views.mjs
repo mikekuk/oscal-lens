@@ -126,16 +126,18 @@ function renderProcessingNotes(result, problem) {
   return renderNotice(problem, true) + result.notes.map(note => renderNotice(note)).join('');
 }
 
-export function renderDocuments(documents, currentIndex) {
+export function renderDocuments(documents, currentIndex, loading = false) {
   return documents.map((entry, index) => {
     const {
       type,
       body
     } = model(entry.doc);
-    return `<button class="doc ${index === currentIndex ? 'active' : ''}" data-doc="${index}">
+    return `<div class="doc-row"><button type="button" class="doc ${index === currentIndex ? 'active' : ''}" data-doc="${index}">
       ${escapeHtml(body.metadata?.title || entry.name)}
       <small>${escapeHtml(type)} · ${escapeHtml(documentPath(entry))}</small>
-    </button>`;
+    </button><button type="button" class="doc-remove" data-remove-doc="${index}"
+      aria-label="${escapeHtml('Remove ' + documentPath(entry) + ' from workspace')}"
+      title="${escapeHtml('Remove ' + documentPath(entry) + ' from workspace')}"${loading ? ' disabled' : ''}><span aria-hidden="true">×</span></button></div>`;
   }).join('');
 }
 

@@ -1,7 +1,7 @@
 import { buildMappingIndex } from './mappings.mjs';
 /** Browser state, event handling and startup. Pure HTML lives in views.mjs. */
 import {
-  readDocuments
+  readDocuments, documentPath
 } from './imports.mjs';
 import {
   model,
@@ -33,13 +33,14 @@ let currentDocumentIndex = 0;
 let tab = 'controls';
 let group = '';
 let validate;
+let loading = false;
 // Display preferences last for this session; assessment sections start hidden.
 const sectionVisibility = {
   metadata: false,
   parameters: false
 };
 
-// A preview depends on the entire workspace, so any file load clears this cache.
+// A preview depends on the entire workspace, so any workspace change clears this cache.
 let previewCache = new WeakMap();
 let mappingCache;
 function cachedPreview(entry) {
@@ -52,7 +53,15 @@ function notice(message, isError = false) {
 }
 
 function renderWorkspace() {
-  if (!documents.length) return;
+  select('#doc-count').textContent = documents.length + ' files';
+  select('#documents').innerHTML = renderDocuments(documents, currentDocumentIndex, loading);
+  if (!documents.length) {
+    for (const selector of ['#heading', '#issue-count', '#groups', '#section-options']) {
+      select(selector).innerHTML = '';
+    }
+    select('#panel').innerHTML = renderNotice('No files loaded. Open files or a folder, or load the example workspace.');
+    return;
+  }
   const entry = documents[currentDocumentIndex];
   const {
     type,
@@ -83,8 +92,6 @@ function renderWorkspace() {
     mappings: mappingCache.index.get(entry.doc)?.get(row.control) || []
   })), notes: [...new Set([...result.notes, ...(mappingCache.notices.get(entry.doc) || [])])] };
   const errorCount = issues.filter(issue => issue.severity === 'error').length;
-  select('#doc-count').textContent = documents.length + ' files';
-  select('#documents').innerHTML = renderDocuments(documents, currentDocumentIndex);
   select('#heading').innerHTML = renderHeading(entry, type, body, result, issues);
   select('#issue-count').textContent = issues.length ? `(${issues.length})` : '';
   select('#groups').innerHTML = renderGroups(type === 'catalog' ? [body] : result.sources, result, group);
@@ -148,6 +155,23 @@ function loadDemo() {
   notice('Example workspace loaded. These documents are illustrative, not an official baseline.');
   render()
 }
+function removeDocument(index) {
+  // A pending upload holds a snapshot of the workspace: do not let it restore a removed file.
+  if (loading || !Number.isInteger(index) || !documents[index]) return;
+  const selected = documents[currentDocumentIndex];
+  const [removed] = documents.splice(index, 1);
+  const retainedIndex = documents.indexOf(selected);
+  currentDocumentIndex = retainedIndex >= 0 ? retainedIndex : Math.min(index, Math.max(0, documents.length - 1));
+  previewCache = new WeakMap();
+  mappingCache = undefined;
+  group = '';
+  if (removed === selected) select('#search').value = '';
+  notice(`Removed ${documentPath(removed)} from the workspace. Your original file is unchanged.`);
+  render();
+  // The focused cross was replaced by rendering; keep keyboard navigation in the file list.
+  const buttons = [...select('#documents').querySelectorAll('[data-remove-doc]')];
+  (buttons[Math.min(index, buttons.length - 1)] || select('#files')).focus();
+}
 // Event delegation survives re-rendering the document and group buttons.
 select('#section-options').onchange = event => {
   const input = event.target.closest('[data-section]');
@@ -166,6 +190,11 @@ select('#all-groups').onclick = () => {
 };
 select('#search').oninput = render;
 select('#documents').onclick = event => {
+  const remove = event.target.closest('[data-remove-doc]');
+  if (remove) {
+    removeDocument(Number(remove.dataset.removeDoc));
+    return;
+  }
   const button = event.target.closest('[data-doc]');
   if (button) {
     currentDocumentIndex = Number(button.dataset.doc);
@@ -205,7 +234,9 @@ select('.tabs').onkeydown = event => {
 async function openDocuments(event, folder = false) {
   const input = event.target,
     files = [...input.files];
-  if (!files.length) return;
+  if (!files.length || loading) return;
+  loading = true;
+  select('#documents').innerHTML = renderDocuments(documents, currentDocumentIndex, loading);
   select('#files').disabled = true;
   select('#folder').disabled = true;
   select('#demo').disabled = true;
@@ -232,6 +263,8 @@ async function openDocuments(event, folder = false) {
     ].filter(Boolean).join(' '), result.errors.length > 0);
     render();
   } finally {
+    loading = false;
+    select('#documents').innerHTML = renderDocuments(documents, currentDocumentIndex, loading);
     input.value = '';
     select('#files').disabled = false;
     select('#folder').disabled = false;

@@ -15,7 +15,7 @@ Open http://localhost:3000. Run `npm test` for the schema-validation and profile
 ## Use
 
 1. Start with the illustrative example workspace, or choose **Open files**.
-2. Select an OSCAL profile and all of its source catalogue/profile JSON files. Use **Open folder** to select a downloaded/cloned `oscal-content` directory, or **Open files** to select individual JSON documents. Multiple uploads accumulate in the workspace; a matching relative path replaces its previous document. Same-named files in different folders remain separate. Each file is limited to 20 MB.
+2. Select an OSCAL profile and all of its source catalogue/profile JSON files. Use **Open folder** to select a downloaded/cloned `oscal-content` directory, or **Open files** to select individual JSON documents. Use the small **×** beside any file to remove it from the browser workspace (the original file is unchanged). Profiles and mappings refresh immediately; missing sources are reported, and opening a removed source again restores dependent views. Multiple uploads accumulate in the workspace; a matching relative path replaces its previous document. Same-named files in different folders remain separate. Each file is limited to 20 MB.
 3. Choose a document in the sidebar. Filter controls by group or search their content.
 4. Expand controls to read requirements with effective ODP values rendered inline. Unset parameters show assignment or selection prompts, including nested choices. **Grey matter** retains document and group context; control-specific supporting material appears within the control.
 5. Open **Validation** for schema errors and processing notices, or **Source** for the original JSON.

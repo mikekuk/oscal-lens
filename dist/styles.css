@@ -216,10 +216,40 @@ aside {
   padding: 0
 }
 
+.doc-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px
+}
+
+.doc-remove {
+  flex: 0 0 28px;
+  padding: 2px;
+  min-height: 28px;
+  background: none;
+  border-color: transparent;
+  color: #aebbd0;
+  font-size: 22px;
+  line-height: 1
+}
+
+.doc-remove:hover:not(:disabled) {
+  color: #ffc3c3;
+  background: #492d38
+}
+
+.doc-remove:disabled {
+  opacity: .4;
+  cursor: wait
+}
+
 .doc {
+  flex: 1;
+  min-width: 0;
   width: 100%;
   text-align: left;
-  margin-bottom: 8px;
+  margin-bottom: 0;
   overflow-wrap: anywhere;
   border-color: transparent;
   background: none;
@@ -576,8 +606,8 @@ footer a {
     overflow: auto
   }
 
-  .doc {
-    min-width: 180px
+  .doc-row {
+    flex: 0 0 230px
   }
 
   .side-foot {

@@ -13,13 +13,19 @@ function cached(docs, preview) {
 }
 test('discovers maps anywhere, renders full controls safely, and reverses direction',async()=>{
   const [{preview},{buildMappingIndex},,{renderControls}] = await ready;
-  const docs=workspace(), get=cached(docs,preview), {index}=buildMappingIndex(docs,get);
+  const docs=workspace();
+  docs[2].doc['mapping-collection'].provenance = {'mapping-description':'Repeated provenance description', 'matching-rationale':'syntactic', status:'draft'};
+  docs[2].doc['mapping-collection'].mappings[0].remarks = 'Resource pair remarks';
+  const get=cached(docs,preview), {index}=buildMappingIndex(docs,get);
   const row=get(docs[0]).rows[0]; row.mappings=index.get(docs[0].doc).get(row.control);
   assert.equal(row.mappings.length,1);
   const html=renderControls('catalog',get(docs[0]),null,0,'','');
   assert.match(html,/Section \/ statement · a.s/); assert.match(html,/Control · b/); assert.match(html,/subset-of/);
   assert.match(html,/Target full statement &lt;script&gt;/); assert.ok(!html.includes('<script>'));
   assert.match(html,/<details class="mapping">/);
+  assert.match(html,/Mapping logic/);
+  assert.match(html,/Resource pair remarks/);
+  assert.doesNotMatch(html,/mapping-provenance|Repeated provenance description|syntactic comparison/);
   const reverse=index.get(docs[1].doc).get(get(docs[1]).rows[0].control)[0];
   assert.equal(reverse.relationship,'superset-of');
 });
@@ -107,7 +113,7 @@ test('nested profiles combine multiple collections and direct maps without leaki
     result.rows[0].mappings = records(outer);
     const html = renderControls('profile',result,null,0,'','');
     assert.match(html,/Mappings \(3\)/);
-    assert.match(html,/ISO mapping/);
+    assert.doesNotMatch(html,/ISO mapping/);
     assert.match(html,/Inherited from root\/catalogs\/b.json/);
     assert.match(html,/Inherited from root\/profiles\/p.json/);
     assert.match(html,/Target full statement &lt;script&gt;/);

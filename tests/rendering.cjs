@@ -139,7 +139,9 @@ test('assessment section toggles reveal their nested content and hide statements
             name: 'assessment-method',
             parts: [{
               name: 'assessment-objects',
-              prose: 'Interview evidence'
+              title: 'Evidence <review>',
+              prose: 'Interview evidence',
+              parts: [{name:'detail',title:'Follow-up',prose:'Nested evidence'}]
             }]
           }
         ]
@@ -153,6 +155,11 @@ test('assessment section toggles reveal their nested content and hide statements
   };
   const html = renderControls('catalog', result, null, 0, '', '', settings);
   assert.ok(html.includes('Interview evidence'));
+  assert.match(html, /<h5 class="subsection-title">Evidence &lt;review&gt;<\/h5>/);
+  assert.match(html, /<h6 class="subsection-title">Follow-up<\/h6>/);
+  assert.match(html, /class="statement-subsection"/);
+  assert.doesNotMatch(renderSectionOptions(result.rows, settings), /data-section="(?:assessment-objects|detail)"/);
+  assert.doesNotMatch(renderControls('catalog', result, null, 0, '', '', {'assessment-method':false}), /Nested evidence|Evidence &lt;review&gt;/);
   assert.ok(!html.includes('Statement text'));
   assert.ok(renderSectionOptions(result.rows, settings).includes(
     'data-section="assessment-method" checked'));

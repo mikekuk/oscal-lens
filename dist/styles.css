@@ -719,7 +719,7 @@ footer a {
 
 /* Profile provenance stays legible against the existing dark reading surface. */
 .profile-change { color: #cbb3f5; text-decoration: underline dotted; text-underline-offset: .2em; }
-.profile-legend, .mapping-provenance { font-size: .875rem; color: #aab8cb; }
+.profile-legend { font-size: .875rem; color: #aab8cb; }
 .mapping { border: 1px solid #35435a; border-radius: 8px; margin: 12px 0; background: #111b2b; }
 .mapping > summary { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 14px; cursor: pointer; }
 .mapping > summary::before { content: '▸'; }
@@ -731,3 +731,20 @@ footer a {
 .mapped-item h5 { font-size: 1rem; margin: 12px 0; }
 .profile-removals { margin-top: 16px; color: #cbb3f5; }
 .profile-removals > summary { cursor: pointer; }
+
+/* Nested OSCAL parts remain within their parent section's visibility setting. */
+.statement-subsection + .statement-subsection,
+.statement-item + .statement-subsection {
+  margin-top: .65rem;
+}
+
+.detail .subsection-title {
+  color: #e0e8f5;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: .65rem 0 .25rem;
+}
+
+.detail h6.subsection-title {
+  font-size: 12px;
+}

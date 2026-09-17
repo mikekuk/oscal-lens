@@ -72,7 +72,7 @@ export function renderSectionOptions(rows, visibility) {
   return options.join('');
 }
 
-// Statement items keep their labels inline, with a line break between items;
+// Statement items keep their labels inline, with space between subsections;
 // structural OSCAL IDs and property tables stay in the Source view.
 function changedText(html, changed, kind = 'content') {
   return changed ? `<span class="profile-change" title="Added or changed by a profile layer (${kind})">${html}</span>` : html;
@@ -91,17 +91,18 @@ function renderProse(text, parameters, row, changed) {
   }
   return result + changedText(escapeHtml(input.slice(offset)), changed);
 }
-function renderPartFlow(part, parameters, visibility, isSectionRoot = false, row, original) {
-  if (visibility[part.name || 'other'] === false) return '';
+function renderPartFlow(part, parameters, visibility, isSectionRoot = false, row, original, depth = 0) {
   const label = part.props?.find(property => property.name === 'label')?.value;
   const oldLabel = original?.props?.find(property => property.name === 'label')?.value;
   const profile = !!row?.baseControl;
   const prose = renderProse(part.prose, parameters, row, profile && part.prose !== original?.prose);
-  const title = !isSectionRoot && part.title && !part.prose ? `<strong>${changedText(escapeHtml(part.title), profile && part.title !== original?.title)}</strong> ` : '';
+  const heading = Math.min(6, 5 + depth);
+  const title = !isSectionRoot && part.title ? `<h${heading} class="subsection-title">${changedText(escapeHtml(part.title), profile && part.title !== original?.title)}</h${heading}>` : '';
   const prefix = label ? `<strong class="item-label">${changedText(escapeHtml(label), profile && label !== oldLabel)}</strong> ` : '';
   const ownText = prose ? `<span class="statement-item">${prefix}${prose}</span>` : prefix;
-  const children = (part.parts || []).map((child, index) => renderPartFlow(child, parameters, visibility, false, row, originalPart(child, original?.parts, index))).filter(Boolean);
-  return [title + ownText, ...children].filter(Boolean).join('<br>');
+  const children = (part.parts || []).map((child, index) => renderPartFlow(child, parameters, visibility, false, row, originalPart(child, original?.parts, index), isSectionRoot ? depth : depth + 1)).filter(Boolean);
+  const content = [title + ownText, ...children].filter(Boolean).join('');
+  return isSectionRoot ? content : `<div class="statement-subsection">${content}</div>`;
 }
 
 function renderParts(parts = [], parameters = {}, visibility = {}, row) {
@@ -110,7 +111,7 @@ function renderParts(parts = [], parameters = {}, visibility = {}, row) {
     const original = originalPart(part, row?.baseControl?.parts, index);
     const title = part.title || (part.name || 'other').replace(/-/g, ' ');
     const changed = !!row?.baseControl && (!original || part.title !== original.title || part.name !== original.name);
-    return `<section class="control-section"><h4>${changedText(escapeHtml(title), changed)}</h4><p class="statement-flow">${renderPartFlow(part, parameters, visibility, true, row, original)}</p></section>`;
+    return `<section class="control-section"><h4>${changedText(escapeHtml(title), changed)}</h4><div class="statement-flow">${renderPartFlow(part, parameters, visibility, true, row, original)}</div></section>`;
   }).join('');
 }
 
@@ -252,7 +253,7 @@ function renderProfileChanges(row) {
 function renderMappings(records = [], visibility) {
   if (!records.length) return '';
   return `<section class="control-section mappings"><h4>Mappings (${records.length})</h4>${records.map(record => {
-    const {map, mapping, collection, other} = record;
+    const {map, mapping, other} = record;
     const otherBody = other.entry && model(other.entry.doc).body;
     const title = otherBody?.metadata?.title || other.entry?.name || other.href || 'Missing resource';
     const targets = record.targets.map(item => itemLabel(item)).join('; ');
@@ -260,10 +261,8 @@ function renderMappings(records = [], visibility) {
     return `<details class="mapping"><summary><span class="badge">${escapeHtml(record.relationship || 'Relationship unspecified')}</span><strong>${escapeHtml(title)}</strong><span class="mapping-targets">${escapeHtml(targets)}</span></summary>
       <div class="mapping-detail"><p><strong>This side:</strong> ${escapeHtml(record.ownItems.map(itemLabel).join('; '))}</p>
       ${record.inheritedFrom ? renderNotice('Inherited from ' + documentPath(record.inheritedFrom) + '. This mapping describes the source content; profile tailoring does not reassess the relationship.') : ''}
-      <p><strong>Relationship:</strong> ${escapeHtml(record.relationship)}${map.ns ? ' · namespace: ' + escapeHtml(map.ns) : ''}${record.rationale ? ' · ' + escapeHtml(record.rationale) + ' comparison' : ''}</p>
+      <p><strong>Relationship:</strong> ${escapeHtml(record.relationship)}${map.ns ? ' · namespace: ' + escapeHtml(map.ns) : ''}</p>
       ${collective ? '<p class="notice">This relationship applies to the complete sets listed on each side, collectively.</p>' : ''}
-      <p class="mapping-provenance">${escapeHtml(collection.doc['mapping-collection'].metadata?.title || collection.name)} · ${escapeHtml(documentPath(collection))}${record.status ? ' · ' + escapeHtml(record.status) : ''}${otherBody?.metadata?.version ? ' · Referenced version ' + escapeHtml(otherBody.metadata.version) : ''}</p>
-      ${record.description ? '<p>' + escapeHtml(record.description) + '</p>' : ''}
       ${map.remarks ? '<p>' + escapeHtml(map.remarks) + '</p>' : ''}
       ${mapping.remarks ? '<p>' + escapeHtml(mapping.remarks) + '</p>' : ''}
       ${map.qualifiers ? renderFields({qualifiers: map.qualifiers}) : ''}
@@ -275,7 +274,7 @@ function renderMappings(records = [], visibility) {
         if (!matches.length) return renderNotice('Cannot locate ' + itemLabel(item) + ' in the loaded resource.', true);
         if (matches.length > 1) return renderNotice('Ambiguous ' + itemLabel(item) + ': multiple matches; no control selected.', true);
         return matches.map(({row: targetRow, node}) => `<div class="mapped-item"><h5>${escapeHtml(itemLabel(item))}</h5>
-          ${item.type === 'control' ? '' : '<p class="statement-flow">' + renderPartFlow(node, targetRow.parameters, {}, false, targetRow, findOriginalPart(targetRow.baseControl?.parts, node.id)) + '</p>'}
+          ${item.type === 'control' ? '' : '<div class="statement-flow">' + renderPartFlow(node, targetRow.parameters, {}, false, targetRow, findOriginalPart(targetRow.baseControl?.parts, node.id)) + '</div>'}
           <p>Full control · ${escapeHtml(targetRow.control.id)}</p>${renderControl(targetRow, 0, visibility, false)}</div>`).join('');
       }).join('')}
       </div></details>`;

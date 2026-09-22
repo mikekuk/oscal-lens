@@ -748,3 +748,25 @@ footer a {
 .detail h6.subsection-title {
   font-size: 12px;
 }
+
+/* Mapping network is constrained to its panel; long IDs never widen the page. */
+.workspace > article { min-width: 0; }
+.graph-view { padding: 12px 0; }
+.graph-filters, .graph-toolbar { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0; align-items: start; }
+.graph-filters details { flex: 1 1 200px; padding: 10px; background: #111b2b; border: 1px solid #35435a; border-radius: 8px; max-height: 230px; overflow: auto; }
+.graph-filters label { display: flex; align-items: center; gap: 8px; margin: 10px 0; overflow-wrap: anywhere; }
+.graph-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.graph-toolbar label { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.graph-toolbar select, .graph-toolbar input { background: #111b2b; color: #eef4ff; border: 1px solid #35435a; padding: 8px; max-width: 260px; }
+.graph-stage { position: relative; height: 600px; background: #0d1522; border: 1px solid #35435a; border-radius: 10px; overflow: hidden; }
+.graph-canvas { position: absolute; inset: 0; }
+.graph-node-actions { position: absolute; z-index: 2; display: flex; flex-wrap: wrap; max-width: 135px; gap: 3px; }
+.graph-node-actions button { padding: 5px 8px; background: #26364c; }
+.graph-dialog { background: #111b2b; color: #eef4ff; border: 1px solid #637693; border-radius: 12px; width: min(850px, 90vw); max-height: 85vh; overflow: auto; }
+.graph-dialog::backdrop { background: #0008; }
+.graph-dialog [data-close] { position: sticky; top: 0; float: right; z-index: 2; }
+.graph-detail { clear: both; overflow-wrap: anywhere; }
+.graph-node-list { display: flex; flex-direction: column; max-height: 280px; overflow: auto; gap: 5px; }
+.graph-node-list button { text-align: left; }
+.graph-count { font-size: 13px; color: #b8cbe4; }
+.graph-notices { margin: 16px 0; overflow-wrap: anywhere; }

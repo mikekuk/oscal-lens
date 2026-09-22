@@ -37,3 +37,10 @@ NIST marks 1.0.5 as a pre-release.
 URL and SHA-256 checksum. Each schema retains its embedded copyright and
 licence notice. See https://github.com/usnistgov/OSCAL/blob/v1.2.3/LICENSE.md
 for NIST terms and https://github.com/usnistgov/OSCAL/releases for releases.
+
+## Cytoscape.js 3.34.3
+
+Unmodified `dist/cytoscape.esm.min.mjs` from the npm `cytoscape@3.34.3`
+package, bundled as `dist/vendor/cytoscape.mjs`. MIT licence and copyright
+notice: `dist/vendor/CYTOSCAPE-LICENSE.txt`.
+Source: https://github.com/cytoscape/cytoscape.js/tree/v3.34.3

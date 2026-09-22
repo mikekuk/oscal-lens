@@ -1,3 +1,4 @@
+import { createGraphState, mountGraph } from './graph-view.mjs';
 import { buildMappingIndex } from './mappings.mjs';
 /** Browser state, event handling and startup. Pure HTML lives in views.mjs. */
 import {
@@ -43,6 +44,8 @@ const sectionVisibility = {
 // A preview depends on the entire workspace, so any workspace change clears this cache.
 let previewCache = new WeakMap();
 let mappingCache;
+const graphState = createGraphState();
+let disposeGraph;
 function cachedPreview(entry) {
   if (!previewCache.has(entry.doc)) previewCache.set(entry.doc, preview(entry.doc, documents));
   return previewCache.get(entry.doc);
@@ -53,6 +56,8 @@ function notice(message, isError = false) {
 }
 
 function renderWorkspace() {
+  disposeGraph?.();
+  disposeGraph = undefined;
   select('#doc-count').textContent = documents.length + ' files';
   select('#documents').innerHTML = renderDocuments(documents, currentDocumentIndex, loading);
   if (!documents.length) {
@@ -105,7 +110,9 @@ function renderWorkspace() {
   });
 
   const panel = select('#panel');
-  if (tab === 'validation') {
+  if (tab === 'graph') {
+    disposeGraph = mountGraph(panel, documents, cachedPreview, mappingCache, graphState);
+  } else if (tab === 'validation') {
     panel.innerHTML = renderValidation(issues, result, problem, type, body.metadata?.['oscal-version']);
   } else if (tab === 'source') {
     panel.innerHTML = renderSource(entry.doc);

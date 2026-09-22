@@ -122,3 +122,46 @@ Mappings carry forward to selected controls in profiles importing the referenced
 Profile views use lavender text and a dotted underline for effective changes from the original catalogue: modified titles/prose/metadata, added parts and changed parameter substitutions (including aggregate dependencies). Unchanged catalogue text retains its normal colour. The legend and hover text explain the distinction. Optional parameter details show changed definitions, and a **Profile removals** expander preserves removed catalogue content for inspection. Changes made by imported profile layers are included. Uploaded source JSON remains unchanged.
 
 The example workspace now includes an assurance catalogue and mapping collection. Everything remains within `dist/` for Azure Static Web Apps: no API, database, automatic source fetching or server-side processing is required.
+
+### Mapping graph
+
+Open **Mapping graph** for a workspace-wide, browser-local network. Catalogue
+colours remain stable during the session; profiles are optional separate previews
+and start hidden to avoid duplicating inherited catalogue controls. The graph has
+its own catalogue/profile, mapping-file and relationship filters, independent of
+the control sidebar. Unmapped controls remain visible.
+
+- Explore all controls, isolated controls (zero neighbours), weakly connected
+  controls (zero or one neighbour), or a connected cluster. Clusters are connected
+  components, not inferred equivalence groups or automated compliance findings.
+- Zoom with the mouse wheel or buttons, pan by dragging the background, and use
+  **Fit graph** or **Rearrange**. Dragging a node pins it; select **Unpin** before
+  dragging it again, or **Unpin all** before a fresh layout.
+- Click a node for its existing control details. Close the pop-up and use **+**
+  beside that selected node to expand sections/statements. Sections without an OSCAL ID are visible but cannot be mapping targets. **−** or
+  **Collapse statements** restores the control view. Exact statement mappings
+  move to their targets; control mappings remain attached to the control.
+- Connection weights count distinct map records from enabled files for the same
+  directed node pair, relationship and namespace. Multiple source/target items
+  within one collective record count once for that pair, and reverse browsing
+  entries are not counted twice. Separate records/files count separately, even
+  when they repeat the same assertion. Thickness and layout attraction scale with
+  count. Expanded statement edges can share an assertion: do not sum their counts
+  to obtain the number of unique underlying maps.
+- Click an edge for the complete source/target sets, remarks and file identities.
+  Collective relationships apply to those sets, not independently to every pair.
+  Profiles inherit source assertions without reassessing their tailored meaning;
+  deleted statement targets are omitted. Missing/invalid mappings produce notices.
+- `no-relationship` starts hidden and never contributes to cluster membership,
+  neighbour counts or layout attraction. Outlier counts refer only to the enabled
+  resources, files and relationship types. Connections never imply transitive
+  mappings or complete coverage.
+- Search centres on a matching visible node. An accessible node list provides
+  keyboard access to details; node action buttons support statement expansion.
+
+The renderer is the pinned, locally bundled Cytoscape.js 3.34.3 distribution
+(`dist/vendor/cytoscape.mjs`), with its MIT licence alongside it. No CDN, graph
+server or runtime package installation is needed. Layout uses the built-in CoSE
+algorithm; very large all-control graphs may take time to rearrange. Filter the
+network before expanding many statement nodes. Positions and filters last for
+this browser session and do not modify uploaded OSCAL files.

@@ -22,7 +22,7 @@ export function locateItem(item, rows) {
 }
 
 /** Build once per workspace load. Keep sets intact, and index both browsing directions. */
-export function buildMappingIndex(documents, getPreview = entry => preview(entry.doc, documents), validate) {
+export function buildMappingIndex(documents, getPreview = entry => preview(entry.doc, documents), validate, {includeResource = () => true, includeMap = () => true} = {}) {
   const index = new Map(), notices = new Map();
   const previews = new Map();
   const readPreview = entry => {
@@ -44,10 +44,12 @@ export function buildMappingIndex(documents, getPreview = entry => preview(entry
           const entry = resolveImport(body, ref?.href, collection, documents);
           if (!['catalog', 'profile'].includes(model(entry.doc).type)) throw Error('Mapping resource must be a catalogue or profile.');
           if (ref.type !== model(entry.doc).type && !(ref.type === 'profile' && model(entry.doc).type === 'catalog')) throw Error('Mapping resource type does not match the loaded document.');
+          if (!includeResource(entry)) return {excluded: true};
           const result = readPreview(entry);
           return {entry, rows: result.rows, notes: result.notes, issues: validate ? validate(entry.doc) : []};
         } catch (error) { return {error: error.message, href: mapping[side + '-resource']?.href}; }
       });
+      if (resources.some(resource => resource.excluded)) continue;
       for (const resource of resources) if (resource.error) addNotice(collection.doc, resource.error);
       for (let side = 0; side < 2; side++) {
         const local = resources[side], other = resources[1 - side];
@@ -56,7 +58,7 @@ export function buildMappingIndex(documents, getPreview = entry => preview(entry
         if (other.error) addNotice(local.entry.doc, `${documentPath(collection)}: ${other.error}`);
         if (!index.has(local.entry.doc)) index.set(local.entry.doc, new Map());
         const byControl = index.get(local.entry.doc);
-        for (const map of list(mapping.maps)) {
+        for (const map of list(mapping.maps).filter(includeMap)) {
           const ownItems = list(map[side ? 'targets' : 'sources']);
           const targets = list(map[side ? 'sources' : 'targets']);
           const matchedRows = new Set();
@@ -83,7 +85,7 @@ export function buildMappingIndex(documents, getPreview = entry => preview(entry
   // Read only direct attachments so inheritance is independent of upload order
   // and never leaks sideways into sibling profiles or unrelated catalogues.
   const direct = new Map(index);
-  for (const entry of documents.filter(entry => entry.doc.profile)) {
+  for (const entry of documents.filter(entry => entry.doc.profile && includeResource(entry))) {
     let result;
     try { result = readPreview(entry); } catch { continue; } // The profile view reports import failures.
     const byControl = new Map(direct.get(entry.doc) || []);

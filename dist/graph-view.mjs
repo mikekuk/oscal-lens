@@ -2,41 +2,13 @@ import cytoscape from './vendor/cytoscape.mjs';
 import { mappingGraph, projectGraph } from './graph-model.mjs';
 import { escapeHtml as esc, renderControls, renderFields } from './views.mjs';
 
-const palette = ['#7dd3fc', '#fbbf24', '#c4b5fd', '#fb7185', '#6ee7b7', '#fdba74', '#e879f9', '#a3e635'];
-export function createGraphState() {
-  return {hiddenResources: new Set(), hiddenFiles: new Set(), hiddenRelationships: new Set(['no-relationship']),
-    expanded: new Set(), positions: new Map(), mode: 'all', initialised: new Set(), colours: new Map()};
-}
-
 /** Mount a workspace-wide graph. Return a disposer so uploads, deletion and tab
  * changes cannot leave an old renderer or event listeners attached. */
 export function mountGraph(panel, documents, getPreview, index, state) {
   const graph = mappingGraph(documents, getPreview, index);
   // Component numbers are recalculated whenever workspace membership changes.
   if (state.mode.startsWith('component:')) state.mode = 'all';
-  for (const resource of graph.resources) {
-    if (!state.initialised.has(resource.id)) {
-      state.initialised.add(resource.id);
-      if (resource.type === 'profile') state.hiddenResources.add(resource.id);
-    }
-    if (!state.colours.has(resource.id)) {
-      const i = state.colours.size;
-      state.colours.set(resource.id, palette[i] || `hsl(${(i * 137.508) % 360}, 70%, 70%)`);
-    }
-  }
-  const options = (items, hidden, kind, label = item => item) => items.map((item, i) => {
-    const id = typeof item === 'string' ? item : item.id;
-    return `<label><input type="checkbox" data-filter="${kind}" data-index="${i}" ${hidden.has(id) ? '' : 'checked'}>
-      ${kind === 'resources' ? `<span class="graph-swatch" style="background:${state.colours.get(id)}"></span>` : ''}${esc(label(item))}</label>`;
-  }).join('');
   panel.innerHTML = `<section class="graph-view">
-    <h3>Mapping network · whole workspace</h3>
-    <p>Explore connected clusters and outliers. Colours identify catalogues; profiles are optional separate previews. Graph filters below are independent of the control sidebar.</p>
-    <div class="graph-filters">
-      <details open><summary>Catalogues / profiles</summary>${options(graph.resources, state.hiddenResources, 'resources', r => `${r.title} (${r.type})`)}</details>
-      <details><summary>Mapping files</summary>${options(graph.files, state.hiddenFiles, 'files') || '<p>No mapping files loaded.</p>'}</details>
-      <details><summary>Relationships</summary>${options(graph.relationships, state.hiddenRelationships, 'relationships') || '<p>No resolved relationships.</p>'}</details>
-    </div>
     <div class="graph-toolbar"><label>Explore <select data-mode></select></label>
       <button data-action="layout">Rearrange</button><button data-action="fit">Fit graph</button>
       <button data-action="in" aria-label="Zoom in">＋</button><button data-action="out" aria-label="Zoom out">−</button>
@@ -122,13 +94,6 @@ export function mountGraph(panel, documents, getPreview, index, state) {
     query('.graph-node-list').innerHTML = projection.nodes.map((n, i) => `<button data-list-node="${i}">${esc(n.label)} · ${esc(n.title)}${n.kind === 'control' ? ` · ${n.degree} neighbours` : ''}</button>`).join('');
     if (rearrange) arrange(); else updateActions();
   }
-  query('.graph-filters').onchange = event => {
-    const input = event.target.closest('[data-filter]'); if (!input) return;
-    const type = input.dataset.filter, item = graph[type][Number(input.dataset.index)], id = item.id || item;
-    const hidden = {resources: state.hiddenResources, files: state.hiddenFiles, relationships: state.hiddenRelationships}[type];
-    if (input.checked) hidden.delete(id); else hidden.add(id);
-    state.mode = 'all'; redraw();
-  };
   query('[data-mode]').onchange = event => {state.mode = event.target.value; redraw(); cy.fit(undefined, 45);};
   query('.graph-toolbar').onclick = event => {
     const action = event.target.closest('[data-action]')?.dataset.action;

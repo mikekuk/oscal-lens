@@ -125,11 +125,19 @@ The example workspace now includes an assurance catalogue and mapping collection
 
 ### Mapping graph
 
-Open **Mapping graph** for a workspace-wide, browser-local network. Catalogue
-colours remain stable during the session; profiles are optional separate previews
-and start hidden to avoid duplicating inherited catalogue controls. The graph has
-its own catalogue/profile, mapping-file and relationship filters, independent of
-the control sidebar. Unmapped controls remain visible.
+Open **Mapping graph**, select the catalogues/profiles you need, then press
+**OK — build graph**. No catalogues or profiles are selected initially. Opening
+the tab only displays the selection form: the renderer, graph data and layout
+are loaded/built on demand after OK. Editing selections does not rebuild the
+displayed graph until you press OK again. Returning to the tab retains your
+choices but waits for OK before rebuilding.
+
+Catalogue colours remain stable during the session; profiles are optional separate
+previews. The graph has its own catalogue/profile, mapping-file and relationship
+filters, independent of the control sidebar. Only selected resources are included
+in the graph (profile source catalogues are consulted where inheritance requires
+them). Unmapped controls within the selected scope remain visible. Pressing OK
+with no resources selected clears the previous graph.
 
 - Explore all controls, isolated controls (zero neighbours), weakly connected
   controls (zero or one neighbour), or a connected cluster. Clusters are connected

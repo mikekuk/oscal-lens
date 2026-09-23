@@ -1,4 +1,4 @@
-import { createGraphState, mountGraph } from './graph-view.mjs';
+import { createGraphState, mountGraphSettings } from './graph-settings.mjs';
 import { buildMappingIndex } from './mappings.mjs';
 /** Browser state, event handling and startup. Pure HTML lives in views.mjs. */
 import {
@@ -67,6 +67,18 @@ function renderWorkspace() {
     select('#panel').innerHTML = renderNotice('No files loaded. Open files or a folder, or load the example workspace.');
     return;
   }
+  // Only the active tab belongs in the keyboard's normal tab order.
+  document.querySelectorAll('[role=tab]').forEach(button => {
+    button.setAttribute('aria-selected', button.dataset.tab === tab);
+    button.tabIndex = button.dataset.tab === tab ? 0 : -1;
+  });
+
+  if (tab === 'graph') {
+    select('#heading').innerHTML = '<h2>Mapping network</h2>';
+    for (const selector of ['#issue-count', '#groups', '#section-options']) select(selector).innerHTML = '';
+    disposeGraph = mountGraphSettings(select('#panel'), documents, cachedPreview, validate, graphState);
+    return;
+  }
   const entry = documents[currentDocumentIndex];
   const {
     type,
@@ -103,16 +115,8 @@ function renderWorkspace() {
 
   select('#section-options').innerHTML = renderSectionOptions(result.rows, sectionVisibility);
 
-  // Only the active tab belongs in the keyboard's normal tab order.
-  document.querySelectorAll('[role=tab]').forEach(button => {
-    button.setAttribute('aria-selected', button.dataset.tab === tab);
-    button.tabIndex = button.dataset.tab === tab ? 0 : -1;
-  });
-
   const panel = select('#panel');
-  if (tab === 'graph') {
-    disposeGraph = mountGraph(panel, documents, cachedPreview, mappingCache, graphState);
-  } else if (tab === 'validation') {
+  if (tab === 'validation') {
     panel.innerHTML = renderValidation(issues, result, problem, type, body.metadata?.['oscal-version']);
   } else if (tab === 'source') {
     panel.innerHTML = renderSource(entry.doc);

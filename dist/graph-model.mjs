@@ -34,27 +34,55 @@ export function mappingGraph(documents, getPreview, mappingIndex) {
       }
     } catch (error) { notices.add(`${id}: ${error.message}`); }
   }
+  // A mapping still names its original catalogue/profile even when only its
+  // descendant profiles are selected. Index visible controls by exact origin,
+  // not by control ID alone, so both ends can follow their inheritance chains.
+  const visibleByOrigin = new Map(), endpointCache = new Map();
+  for (const node of nodes) {
+    for (const origin of [{doc: node.entry.doc, controlId: node.row.control.id}, ...(node.row.lineage || [])]) {
+      if (!visibleByOrigin.has(origin.doc)) visibleByOrigin.set(origin.doc, new Map());
+      const controls = visibleByOrigin.get(origin.doc);
+      if (!controls.has(origin.controlId)) controls.set(origin.controlId, new Set());
+      controls.get(origin.controlId).add(node);
+    }
+  }
+  function visibleTargets(item, other) {
+    if (!other.entry || !other.rows) return [];
+    const doc = other.entry.doc;
+    if (!endpointCache.has(doc)) endpointCache.set(doc, new Map());
+    const cache = endpointCache.get(doc), id = key(item.type, item['id-ref']);
+    if (cache.has(id)) return cache.get(id);
+    const original = locateItem(item, other.rows), matches = [];
+    if (original.length === 1) {
+      const candidates = visibleByOrigin.get(doc)?.get(original[0].row.control.id) || [];
+      for (const candidate of candidates) {
+        // Check the effective profile content: removed or ambiguous statement
+        // targets cannot be restored merely because the catalogue contains them.
+        const found = locateItem(item, rowsByDoc.get(candidate.entry.doc));
+        if (found.length === 1 && found[0].row === candidate.row) matches.push({item, ...found[0]});
+      }
+    }
+    cache.set(id, matches);
+    return matches;
+  }
   const seen = new Set(), mapIds = new Map();
   for (const resource of resources) {
     const rows = rowsByDoc.get(resource.entry.doc) || [];
     for (const row of rows) {
       for (const record of mappingIndex.index.get(resource.entry.doc)?.get(row.control) || []) {
-        const otherRows = rowsByDoc.get(record.other.entry?.doc);
-        if (!otherRows) continue;
         if (!mapIds.has(record.map)) mapIds.set(record.map, mapIds.size);
         const own = record.ownItems.flatMap(item => {
           const matches = locateItem(item, rows);
           return matches.length === 1 ? [{item, ...matches[0]}] : [];
         });
-        const other = record.targets.flatMap(item => {
-          const matches = locateItem(item, otherRows);
-          return matches.length === 1 ? [{item, ...matches[0]}] : [];
-        });
+        const other = record.targets.flatMap(item => visibleTargets(item, record.other));
         for (const a of own) for (const b of other) {
           const source = record.reverse ? b : a, target = record.reverse ? a : b;
           const sourceNode = nodesByRow.get(source.row), targetNode = nodesByRow.get(target.row);
+          const projectedRecord = !record.inheritedFrom && nodesByRow.get(b.row).entry.doc !== record.other.entry.doc
+            ? {...record, inheritedFrom: record.other.entry} : record;
           const occurrence = {id: mapIds.get(record.map), file: documentPath(record.collection),
-            relationship: record.map.relationship || 'unspecified', ns: record.map.ns || '', record,
+            relationship: record.map.relationship || 'unspecified', ns: record.map.ns || '', record: projectedRecord,
             source: sourceNode.id, target: targetNode.id,
             sourcePart: source.item.type === 'statement' ? source.node.id : null,
             targetPart: target.item.type === 'statement' ? target.node.id : null};

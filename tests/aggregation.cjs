@@ -44,7 +44,7 @@ test('partial aggregates retain prompts, missing references and cycle notices', 
     defined: { values: ['Owner'] }, unset: { label: 'frequency' },
     a: aggregate('b'), b: { values: ['{{ insert: param, a }}'] } };
   assert.equal(substituteParameters('{{ insert: param, all }}', scope),
-    'Owner; [Assignment: frequency]; [Undefined parameter: missing]');
+    'Owner; [ODP: frequency]; [Undefined parameter: missing]');
   assert.equal(substituteParameters('{{ insert: param, a }}', scope), '[Circular parameter: a]');
 });
 
@@ -57,5 +57,5 @@ test('aggregate output remains escaped and non-RMF properties are not interprete
   assert.ok(html.includes('&lt;script&gt;')); assert.ok(!html.includes('<script>'));
   assert.equal(substituteParameters('{{ insert: param, p }}', {
     p: { label: 'role', props: [{ name: 'aggregates', ns: 'urn:unrelated', value: 'other' }] }
-  }), '[Assignment: role]');
+  }), '[ODP: role]');
 });

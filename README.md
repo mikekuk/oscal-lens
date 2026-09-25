@@ -17,7 +17,7 @@ Open http://localhost:3000. Run `npm test` for the schema-validation and profile
 1. Start with the illustrative example workspace, or choose **Open files**.
 2. Select an OSCAL profile and all of its source catalogue/profile JSON files. Use **Open folder** to select a downloaded/cloned `oscal-content` directory, or **Open files** to select individual JSON documents. Use the small **×** beside any file to remove it from the browser workspace (the original file is unchanged). Profiles and mappings refresh immediately; missing sources are reported, and opening a removed source again restores dependent views. Multiple uploads accumulate in the workspace; a matching relative path replaces its previous document. Same-named files in different folders remain separate. Each file is limited to 20 MB.
 3. Choose a document in the sidebar. Filter controls by group or search their content.
-4. Expand controls to read requirements with effective ODP values rendered inline. Unset parameters show assignment or selection prompts, including nested choices. **Grey matter** retains document and group context; control-specific supporting material appears within the control.
+4. Expand controls to read requirements with effective ODP values rendered inline. Parameters distinguish assigned values, constraints, selections and open ODPs, including nested choices. **Grey matter** retains document and group context; control-specific supporting material appears within the control.
 5. Open **Validation** for schema errors and processing notices, or **Source** for the original JSON.
 
 ## Unresolved NIST profiles
@@ -69,9 +69,18 @@ Source documents remain unchanged. This remains a selection/tailoring viewer rat
 
 ## Reading controls
 
-ODP insertions such as `{{ insert: param, frequency }}` are replaced by effective values from the loaded profile chain. Outer profile settings override imported settings. Unset values show `[Assignment: frequency]` or `[Selection (one or more): choice A; choice B]` using the parameter definition. NIST RMF `aggregates` properties (and unnamespaced `aggregates` properties) are followed recursively, combining referenced ODP results in declared order with semicolons. Explicit values on the aggregate itself take precedence. Unset members keep their prompts rather than disappearing. Choices and values can reference other parameters; missing definitions and cycles produce explicit prompts. No values are invented.
+ODP insertions such as `{{ insert: param, frequency }}` use the effective definitions from the loaded profile chain or resolved catalogue. Outer profile settings override imported settings. Presentation follows these rules:
 
-Statement items appear on separate lines with their original labels (a., b., 1., 2., etc.). Internal part IDs and label-property tables remain available in Source. Enable **Parameters** in the sidebar to inspect the effective parameter definitions and values, including inherited and profile-tailored parameters. This section is hidden by default; inline substitution remains active regardless of the toggle.
+- Explicit `values` render inline in green (**Filled**). Any constraints remain supporting detail; Lens does not test constraint satisfaction.
+- Constraints without values render as `[CONSTRAINT: at least every 3 years]` in amber (**Constrained, not assigned**). Test expressions are retained, never executed.
+- Selections render as `[SELECT (one): choice A / choice B]` (or `one or more`) in amber. Allowed choices are not assignments.
+- Other parameters render as `[ODP: frequency]` in blue (**Open**). Guidelines alone do not assign a value.
+
+NIST RMF `aggregates` properties (and unnamespaced equivalents) combine referenced ODP results recursively in declared order. Explicit values or constraints on an aggregate take precedence. Aggregates retain open/constrained markers and are described as derived when all references are filled. Missing definitions and cycles produce explicit prompts. Source JSON is never changed.
+
+A resolved profile is an OSCAL **catalogue** and can be loaded on its own, without importing its original profile or catalogue. A metadata link with `rel: "resolution-source"` labels it as a resolved profile in the document list and heading. Catalogues without this marker receive exactly the same parameter rendering. Lens does not infer original catalogue definitions or profile change provenance when those have not been supplied.
+
+Statement items appear on separate lines with their original labels (a., b., 1., 2., etc.). Internal part IDs and label-property tables remain available in Source. Enable **Parameters** in the sidebar to inspect status, values, constraints, selections, guidelines, definitions and the statement IDs where a parameter is used (including aggregate references). Full definitions remain expandable, including inherited and profile-tailored fields. This section is hidden by default; inline substitution remains active regardless of the toggle.
 
 The sidebar's **Control sections** checkboxes show or hide each part type. Assessment sections and control metadata are hidden by default. Preferences apply across documents during the current session and reset on refresh; original source content is never removed. Nested items follow their containing section's visibility.
 
@@ -119,7 +128,7 @@ Only OSCAL `control` and `statement` target types are supported. Mapping collect
 
 Mappings carry forward to selected controls in profiles importing the referenced catalogue or profile, including nested profiles. All loaded mapping files contribute: for example, NATO-to-NIST and ISO-to-NIST mappings both appear on the same NIST control. Direct profile mappings appear alongside inherited mappings. Inherited entries identify their source and describe the original content; tailoring, including removing mapped statements, does not reassess the recorded relationship. Excluded controls and unrelated documents with matching control IDs do not receive mappings. No recorded mapping is not evidence of non-compliance or absence of a relationship.
 
-Profile views use lavender text and a dotted underline for effective changes from the original catalogue: modified titles/prose/metadata, added parts and changed parameter substitutions (including aggregate dependencies). Unchanged catalogue text retains its normal colour. The legend and hover text explain the distinction. Optional parameter details show changed definitions, and a **Profile removals** expander preserves removed catalogue content for inspection. Changes made by imported profile layers are included. Uploaded source JSON remains unchanged.
+Profile views use lavender text and a dotted underline for effective changes from the original catalogue: modified titles/prose/metadata, added parts and changed parameter substitutions (including aggregate dependencies). Inline parameter state colours take priority while the dotted underline retains profile provenance. Unchanged catalogue prose retains its normal colour. The legend and hover text explain the distinction. Optional parameter details show changed definitions, and a **Profile removals** expander preserves removed catalogue content for inspection. Changes made by imported profile layers are included. Uploaded source JSON remains unchanged.
 
 The example workspace now includes an assurance catalogue and mapping collection. Everything remains within `dist/` for Azure Static Web Apps: no API, database, automatic source fetching or server-side processing is required.
 

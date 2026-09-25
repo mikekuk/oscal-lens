@@ -7,7 +7,7 @@ test('profile colours only changed prose and ODPs including aggregate dependenci
   const profile={profile:{imports:[{href:'c.json','include-all':{}}],modify:{'set-parameters':[{'param-id':'p',values:['daily']}],alters:[{'control-id':'c',removes:[{'by-id':'old'}],adds:[{parts:[{id:'new',name:'guidance',prose:'Added <script>text</script>'}]}]}]}}};
   const before=JSON.stringify(catalog),result=preview(profile,[{name:'c.json',doc:catalog}]);
   const html=renderControls('profile',result,null,0,'','');
-  assert.match(html,/Review <span class="profile-change"[^>]*>daily<\/span>\./);
+  assert.match(html,/Review <span class="odp odp-derived"[^>]*><span class="profile-change"[^>]*>daily<\/span><\/span>\./);
   assert.match(html,/<span class="profile-change"[^>]*>Added &lt;script&gt;text/);
   assert.match(html,/Profile removals \(1\)/);assert.match(html,/To remove/);
   assert.equal(JSON.stringify(catalog),before);

@@ -770,3 +770,14 @@ footer a {
 .graph-node-list button { text-align: left; }
 .graph-count { font-size: 13px; color: #b8cbe4; }
 .graph-notices { margin: 16px 0; overflow-wrap: anywhere; }
+
+/* State colour is independent of profile provenance (the dotted underline). */
+.odp { font-weight: 600; border-radius: .2rem; }
+.odp-filled, .odp-derived { color: #91dfc0; }
+.odp-constrained { color: #f3cd86; }
+.odp-open { color: #a9c9f5; }
+.odp .profile-change { color: inherit; }
+.odp:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.odp-legend { font-size: .8rem; color: #a6b4ca; line-height: 1.7; }
+.parameter-detail { margin: 1rem 0; padding: .75rem; border: 1px solid #344258; border-radius: .5rem; }
+.parameter-detail h5 { margin: 0 0 .6rem; font-size: .9rem; }

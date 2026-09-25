@@ -1,7 +1,8 @@
 import { same, originalPart, parameterChanged, removedContent } from './provenance.mjs';
 import { itemLabel, locateItem } from './mappings.mjs';
 import {
-  substituteParameters
+  substituteParameters, describeParameter, constraintText, parameterStatuses,
+  insertionIds, parameterReferences, isResolvedProfile
 } from './parameters.mjs';
 /** Pure HTML renderers. Application state and event handlers live in app.mjs. */
 import {
@@ -79,14 +80,16 @@ function changedText(html, changed, kind = 'content') {
 }
 function renderProse(text, parameters, row, changed) {
   const input = String(text ?? '').replace(/\s+/g, ' ').trim();
-  if (changed) return changedText(escapeHtml(substituteParameters(input, parameters)), true);
   const pattern = /\{\{\s*insert:\s*param\s*,\s*([^{}]+?)\s*\}\}/g;
   let result = '', offset = 0;
   for (const match of input.matchAll(pattern)) {
     result += changedText(escapeHtml(input.slice(offset, match.index)), changed);
-    const value = substituteParameters(match[0], parameters);
+    const id = match[1].trim();
+    const { text: value, state } = describeParameter(id, parameters);
+    const constraint = constraintText(parameters[id]);
+    const hint = `${parameterStatuses[state]}${constraint ? '. Constraint: ' + constraint : ''}`;
     const modified = row?.baseControl && parameterChanged(match[1].trim(), parameters, row.baseParameters);
-    result += changedText(escapeHtml(value), changed || modified, 'parameter');
+    result += `<span class="odp odp-${state}" tabindex="0" title="${escapeHtml(hint)}">${changedText(escapeHtml(value), changed || modified, 'parameter')}</span>`;
     offset = match.index + match[0].length;
   }
   return result + changedText(escapeHtml(input.slice(offset)), changed);
@@ -135,7 +138,7 @@ export function renderDocuments(documents, currentIndex, loading = false) {
     } = model(entry.doc);
     return `<div class="doc-row"><button type="button" class="doc ${index === currentIndex ? 'active' : ''}" data-doc="${index}">
       ${escapeHtml(body.metadata?.title || entry.name)}
-      <small>${escapeHtml(type)} · ${escapeHtml(documentPath(entry))}</small>
+      <small>${escapeHtml(type === 'catalog' && isResolvedProfile(body) ? 'resolved profile (catalogue)' : type)} · ${escapeHtml(documentPath(entry))}</small>
     </button><button type="button" class="doc-remove" data-remove-doc="${index}"
       aria-label="${escapeHtml('Remove ' + documentPath(entry) + ' from workspace')}"
       title="${escapeHtml('Remove ' + documentPath(entry) + ' from workspace')}"${loading ? ' disabled' : ''}><span aria-hidden="true">×</span></button></div>`;
@@ -149,7 +152,7 @@ export function renderHeading(entry, type, body, result, issues) {
   const status = errorCount ? `${errorCount} validation errors` : issues.some(issue => issue.code === 'schema-unavailable') ? 'Schema not checked' : issues.length ? 'Validation notice' :
     'Schema checks passed';
   return `<div>
-    <p class="eyebrow">${type === 'profile' ? 'PROFILE SELECTION PREVIEW' : type === 'mapping-collection' ? 'MAPPING COLLECTION' : 'CATALOGUE'}</p>
+    <p class="eyebrow">${type === 'profile' ? 'PROFILE SELECTION PREVIEW' : type === 'mapping-collection' ? 'MAPPING COLLECTION' : isResolvedProfile(body) ? 'RESOLVED PROFILE · CATALOGUE' : 'CATALOGUE'}</p>
     <h2>${escapeHtml(body.metadata?.title || entry.name)}</h2>
     <p>${result.rows.length} controls · ${groupCount} groups · OSCAL ${escapeHtml(body.metadata?.['oscal-version'] || 'unknown')}</p>
   </div><span class="badge ${issues.length ? 'warn' : ''}">${status}</span>`;
@@ -203,6 +206,42 @@ export function renderGreyMatter(roots, selectedGroup, problem) {
   return `<div class="count">Grey matter · metadata, guidance, parameters and supporting resources</div>${renderNotice(problem, true)}${content}`;
 }
 
+// Report direct and transitive uses (including NIST aggregate ODPs) by statement ID.
+function parameterUses(id, row) {
+  const uses = new Set();
+  function reaches(ref, trail = []) {
+    if (ref === id) return true;
+    if (trail.includes(ref)) return false;
+    return parameterReferences(row.parameters?.[ref]).some(next => reaches(next, [...trail, ref]));
+  }
+  function walk(parts = []) {
+    for (const part of parts) {
+      if (insertionIds(part.prose).some(ref => reaches(ref))) uses.add(part.id || part.title || part.name || row.control.id);
+      walk(part.parts);
+    }
+  }
+  walk(row.control.parts);
+  return [...uses].join('; ') || 'Not referenced in this control’s prose';
+}
+
+function renderParameter(parameter, row) {
+  const scope = row.parameters || Object.fromEntries((row.control.params || []).map(p => [p.id, p]));
+  const { text, state } = describeParameter(parameter.id, scope);
+  const original = row.baseParameters?.[parameter.id];
+  const label = parameter.label || parameter.usage;
+  const definition = original ? (original.label || original.usage) : label;
+  const fields = {
+    Status: parameterStatuses[state],
+    [parameter.values?.length ? 'Value' : 'Inline display']: text,
+    ...(parameter.constraints?.length ? { Constraint: constraintText(parameter) } : {}),
+    ...(parameter.select ? { Selection: parameter.select } : {}),
+    ...(parameter.guidelines?.length ? { Guidelines: parameter.guidelines } : {}),
+    [original ? 'Catalogue definition' : 'Definition in supplied document']: definition || 'Not supplied',
+    'Used in': parameterUses(parameter.id, row)
+  };
+  return `<div class="parameter-detail"><h5>${escapeHtml(parameter.id)}${label ? ' — ' + escapeHtml(label) : ''}</h5>${renderFields(fields)}<details><summary>Full parameter definition</summary>${renderFields(parameter, original, !!row.baseControl)}</details></div>`;
+}
+
 function renderControl(row, index, visibility, includeMappings = true) {
   const control = row.control;
   const breadcrumb = [...row.groups.map(group => group.title), ...row.parents].join(' / ') || 'Ungrouped';
@@ -211,7 +250,7 @@ function renderControl(row, index, visibility, includeMappings = true) {
   const effectiveParameters = Object.values(row.parameters || {}).length
     ? Object.values(row.parameters) : (control.params || []);
   const parameters = visibility.parameters && effectiveParameters.length
-    ? `<section class="control-section"><h4>Parameters</h4>${effectiveParameters.map(parameter => renderFields(parameter, row.baseParameters?.[parameter.id], !!row.baseControl)).join('')}</section>` : '';
+    ? `<section class="control-section"><h4>Parameters</h4>${effectiveParameters.map(parameter => renderParameter(parameter, row)).join('')}</section>` : '';
   const metadata = visibility.metadata ? renderFields(omitFields(control, ['id', 'title', 'parts', 'params',
     'controls'
   ]), row.baseControl, !!row.baseControl) : '';
@@ -231,7 +270,7 @@ export function renderControls(type, result, problem, errorCount, selectedGroup,
       .includes(query);
   });
   const previewNotice = type === 'profile' ? renderNotice(
-    'Selection preview: selected controls and effective parameter values are shown within source groups. This is not a fully resolved OSCAL catalogue.'
+    'Selection preview: selected controls and effective parameter definitions are shown within source groups. This is not a fully resolved OSCAL catalogue.'
   ) : '';
   const invalidNotice = errorCount ? renderNotice(
     'This document has validation errors. Displayed content is for inspection only.', true) : '';
@@ -239,7 +278,7 @@ export function renderControls(type, result, problem, errorCount, selectedGroup,
     'No controls match this view.';
   const controls = rows.length ? rows.map((row, index) => renderControl(row, index, visibility)).join('') :
     `<div class="empty">${emptyMessage}</div>`;
-  return `${previewNotice}${type === 'profile' ? '<p class="profile-legend"><span class="profile-change">Coloured text</span> = added or changed by a profile layer. Other text comes from the catalogue.</p>' : ''}${invalidNotice}${renderProcessingNotes(result, problem)}
+  return `${previewNotice}${type === 'profile' ? '<p class="profile-legend"><span class="profile-change">Dotted underline</span> = added or changed by a profile layer. Other text comes from the catalogue.</p>' : ''}${invalidNotice}<p class="odp-legend"><span class="odp odp-filled">Filled</span> explicit value · <span class="odp odp-constrained">Constrained</span> restriction or selection, not assigned · <span class="odp odp-open">Open</span> organisation-defined. Parameter details are available using the Parameters toggle.</p>${renderProcessingNotes(result, problem)}
     <div class="count"><span>${rows.length} ${rows.length === 1 ? 'control' : 'controls'} shown</span>
       <span>${selectedGroup ? 'Filtered by group' : 'All groups'}</span>
     </div>${controls}`;

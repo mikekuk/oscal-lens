@@ -19,8 +19,8 @@ test('real SI-3 displays nested ODP prompts and labelled flowing statements', as
     }
   }, []);
   const html = renderControls('catalog', result, null, 0, '', '');
-  assert.ok(html.includes('[Selection (one or more): signature-based; non-signature-based]'));
-  assert.ok(html.includes('take [Assignment: action]'));
+  assert.ok(html.includes('[SELECT (one or more): signature-based / non-signature-based]'));
+  assert.ok(html.replace(/<[^>]*>/g, '').includes('take [ODP: action]'));
   for (const label of ['a.', 'b.', 'c.', '1.', '2.', 'd.']) {
     assert.ok(html.includes('class="item-label">' + label + '</strong>'));
   }

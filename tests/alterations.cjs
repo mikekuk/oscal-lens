@@ -105,7 +105,7 @@ test('profile adds create visible custom sections with inline ODP values', async
   const result = preview(input.profile, input.documents);
   const html = renderControls('profile', result, null, 0, '', '');
   assert.ok(html.includes('Local instructions'));
-  assert.ok(html.includes('Review weekly.'));
+  assert.ok(html.replace(/<[^>]*>/g, '').includes('Review weekly.'));
   assert.ok(renderSectionOptions(result.rows, {}).includes(
     'data-section="implementation-guidance" checked'));
   assert.equal(input.catalog.catalog.controls[0].parts.length, 2);

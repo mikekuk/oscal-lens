@@ -14,6 +14,11 @@ test('workspace deletion refreshes profiles, mappings, selection and empty state
   global.fetch=async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(path.join(__dirname,'../dist',url),'utf8'))});
   try {
     await import('../dist/app.mjs');
+    const details={open:true,dataset:{modelGroup:'profile'}};
+    element('#documents').onclick({preventDefault(){},target:{closest:selector=>selector==='[data-model-group] > summary'?{parentElement:details}:null}});
+    assert.equal(details.open,false);
+    element('#search').oninput();
+    assert.match(element('#documents').innerHTML,/data-model-group="profile">/);
     assert.match(element('#panel').innerHTML,/Mappings \(1\)/);
     assert.match(element('#panel').innerHTML,/gov-1_smt/);
     assert.match(element('#panel').innerHTML,/<span class="profile-change"[^>]*>every six months/);

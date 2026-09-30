@@ -90,3 +90,18 @@ test('ambiguous section identifiers cannot crash graph expansion',async()=>{
   assert.equal(new Set(result.nodes.map(n=>n.id)).size,result.nodes.length);
   assert.ok(graph.notices.some(n=>n.includes('ambiguous section IDs')));
 });
+test('per-file lists retain isolated controls in cluster views and follow applied filters',async()=>{
+  const {graph,projectGraph}=await build(fixture());
+  const result=projectGraph(graph,{mode:'component:0',expanded:new Set([graph.nodes[0].id])});
+  assert.deepEqual(result.resourceGroups.map(g=>[g.id,g.related.map(n=>n.label),g.isolated.map(n=>n.label)]),
+    [['a.json',['a'],['outlier']],['b.json',['b'],[]]]);
+  assert.equal(result.nodes.some(n=>n.label==='outlier'),false);
+  const filtered=projectGraph(graph,{relationships:new Set()});
+  assert.deepEqual(filtered.resourceGroups.map(g=>[g.related.length,g.isolated.length]),[[0,2],[0,1]]);
+  const single=projectGraph(graph,{resources:new Set(['a.json'])});
+  assert.equal(single.resourceGroups.length,1);assert.equal(single.resourceGroups[0].isolated.length,2);
+  const {renderGraphControlLists}=await import('../dist/views.mjs');
+  const html=renderGraphControlLists(result.resourceGroups);
+  assert.match(html,/a.json/);assert.match(html,/Isolated controls \(1\)/);assert.match(html,/outlier/);
+  assert.match(html,/No isolated controls/);assert.match(html,/data-list-group="1"/);
+});

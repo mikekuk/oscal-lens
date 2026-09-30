@@ -30,6 +30,7 @@ import {
 
 const select = selector => document.querySelector(selector);
 let documents = [];
+const collapsedDocumentGroups = new Set();
 let currentDocumentIndex = 0;
 let tab = 'controls';
 let group = '';
@@ -59,7 +60,7 @@ function renderWorkspace() {
   disposeGraph?.();
   disposeGraph = undefined;
   select('#doc-count').textContent = documents.length + ' files';
-  select('#documents').innerHTML = renderDocuments(documents, currentDocumentIndex, loading);
+  select('#documents').innerHTML = renderDocuments(documents, currentDocumentIndex, loading, collapsedDocumentGroups);
   if (!documents.length) {
     for (const selector of ['#heading', '#issue-count', '#groups', '#section-options']) {
       select(selector).innerHTML = '';
@@ -201,6 +202,15 @@ select('#all-groups').onclick = () => {
 };
 select('#search').oninput = render;
 select('#documents').onclick = event => {
+  const summary = event.target.closest('[data-model-group] > summary');
+  if (summary) {
+    event.preventDefault();
+    const details = summary.parentElement;
+    details.open = !details.open;
+    if (details.open) collapsedDocumentGroups.delete(details.dataset.modelGroup);
+    else collapsedDocumentGroups.add(details.dataset.modelGroup);
+    return;
+  }
   const remove = event.target.closest('[data-remove-doc]');
   if (remove) {
     removeDocument(Number(remove.dataset.removeDoc));
@@ -247,7 +257,7 @@ async function openDocuments(event, folder = false) {
     files = [...input.files];
   if (!files.length || loading) return;
   loading = true;
-  select('#documents').innerHTML = renderDocuments(documents, currentDocumentIndex, loading);
+  select('#documents').innerHTML = renderDocuments(documents, currentDocumentIndex, loading, collapsedDocumentGroups);
   select('#files').disabled = true;
   select('#folder').disabled = true;
   select('#demo').disabled = true;
@@ -275,7 +285,7 @@ async function openDocuments(event, folder = false) {
     render();
   } finally {
     loading = false;
-    select('#documents').innerHTML = renderDocuments(documents, currentDocumentIndex, loading);
+    select('#documents').innerHTML = renderDocuments(documents, currentDocumentIndex, loading, collapsedDocumentGroups);
     input.value = '';
     select('#files').disabled = false;
     select('#folder').disabled = false;

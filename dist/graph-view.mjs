@@ -1,6 +1,6 @@
 import cytoscape from './vendor/cytoscape.mjs';
 import { mappingGraph, projectGraph } from './graph-model.mjs';
-import { escapeHtml as esc, renderControls, renderFields } from './views.mjs';
+import { escapeHtml as esc, renderControls, renderFields, renderGraphControlLists } from './views.mjs';
 
 /** Mount a workspace-wide graph. Return a disposer so uploads, deletion and tab
  * changes cannot leave an old renderer or event listeners attached. */
@@ -18,7 +18,9 @@ export function mountGraph(panel, documents, getPreview, index, state) {
     <p class="graph-count" role="status"></p>
     <div class="graph-stage"><div class="graph-canvas" aria-label="Interactive mapping network"></div><div class="graph-node-actions"></div></div>
     <p class="side-foot">Drag nodes to move and pin them. Drag the background to pan; scroll to zoom. Use + beside a selected control to expand its sections / statements. Line width and layout attraction reflect distinct mapping occurrences, not assurance or compliance. Arrows preserve source → target direction.</p>
-    <details><summary>Accessible node list / details</summary><div class="graph-node-list"></div></details>
+    <section aria-label="Controls by selected file"><h3>Controls by selected file</h3>
+      <p class="graph-list-scope">Isolation means no connected controls within the applied file and relationship selections. These lists include all controls in that scope, regardless of the Explore view. “No relationship” mappings do not count as connections. Check resolution notices for missing or invalid mappings.</p>
+      <div class="graph-node-list"></div></section>
     <details class="graph-notices" ${graph.notices.length ? 'open' : ''}><summary>Resolution notices (${graph.notices.length})</summary>${graph.notices.map(n => `<p>${esc(n)}</p>`).join('')}</details>
     <dialog class="graph-dialog" aria-label="Mapping network details"><button data-close>Close</button><div class="graph-detail"></div></dialog>
   </section>`;
@@ -91,7 +93,7 @@ export function mountGraph(panel, documents, getPreview, index, state) {
     cy.nodes().forEach(node => { if (state.positions.get(node.id())?.pinned) node.lock(); });
     const links = projection.edges.filter(e => e.kind === 'mapping');
     query('.graph-count').textContent = `${projection.controls} / ${projection.totalControls} controls · ${links.length} connections · ${projection.isolated} isolated controls in filter scope · ${projection.components.filter(c => c.length > 1).length} connected clusters` + (projection.nodes.length ? '' : ' · No controls match these filters.');
-    query('.graph-node-list').innerHTML = projection.nodes.map((n, i) => `<button data-list-node="${i}">${esc(n.label)} · ${esc(n.title)}${n.kind === 'control' ? ` · ${n.degree} neighbours` : ''}</button>`).join('');
+    query('.graph-node-list').innerHTML = renderGraphControlLists(projection.resourceGroups);
     if (rearrange) arrange(); else updateActions();
   }
   query('[data-mode]').onchange = event => {state.mode = event.target.value; redraw(); cy.fit(undefined, 45);};
@@ -117,8 +119,9 @@ export function mountGraph(panel, documents, getPreview, index, state) {
   };
   query('.graph-node-list').onclick = event => {
     const button = event.target.closest('[data-list-node]'); if (!button) return;
-    selectedId = projection.nodes[Number(button.dataset.listNode)].id; updateActions();
-    inspect(projection.nodes[Number(button.dataset.listNode)]);
+    const node = projection.resourceGroups[Number(button.dataset.listGroup)][button.dataset.listKind][Number(button.dataset.listNode)];
+    selectedId = node.id; updateActions();
+    inspect(node);
   };
   cy.on('tap', 'node', event => {selectedId = event.target.id(); updateActions(); inspect(projection.nodes.find(n => n.id === selectedId));});
   cy.on('tap', 'edge', event => {

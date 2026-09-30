@@ -120,6 +120,15 @@ export function projectGraph(graph, {resources, files, relationships, expanded =
     }
     components.push(members);
   }
+  // File summaries use the applied mapping scope before the canvas exploration
+  // mode hides nodes. Expanding statements must never change control counts.
+  const resourceGroups = graph.resources.filter(resource => !resources || resources.has(resource.id))
+    .map(resource => ({id: resource.id, title: resource.title, related: [], isolated: []}));
+  const groupsById = new Map(resourceGroups.map(group => [group.id, group]));
+  for (const node of controls) {
+    const degree = neighbours.get(node.id).size;
+    groupsById.get(node.resource)[degree ? 'related' : 'isolated'].push({...node, kind: 'control', degree});
+  }
   const isolated = controls.filter(node => neighbours.get(node.id).size === 0).length;
   controls = controls.filter(node => mode === 'isolated' ? neighbours.get(node.id).size === 0
     : mode === 'weak' ? neighbours.get(node.id).size <= 1
@@ -146,5 +155,5 @@ export function projectGraph(graph, {resources, files, relationships, expanded =
     }
   }
   return {nodes, edges: [...edges.values()], controls: controls.length, isolated, components,
-    totalControls: allowed.size};
+    totalControls: allowed.size, resourceGroups};
 }

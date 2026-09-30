@@ -192,3 +192,15 @@ test('ODP values are escaped as text and are searchable after substitution', asy
   assert.ok(!html.includes('<script>'));
   assert.ok(html.includes('1 control'));
 });
+test('workspace model groups preserve original selection and removal indices',async()=>{
+  const {renderDocuments}=await import('../dist/views.mjs');
+  const docs=[{name:'p.json',doc:{profile:{}}},{name:'a.json',doc:{catalog:{}}},{name:'q.json',doc:{profile:{metadata:{title:'<unsafe>'}}}}];
+  const html=renderDocuments(docs,2,false,new Set(['profile']));
+  assert.match(html,/data-model-group="profile">/);
+  assert.match(html,/Profiles \(2\)/);
+  assert.match(html,/data-model-group="catalog" open/);
+  assert.match(html,/class="doc active" data-doc="2"/);
+  assert.match(html,/data-remove-doc="2"/);
+  assert.match(html,/&lt;unsafe&gt;/);
+  assert.equal(renderDocuments([],0),'');
+});

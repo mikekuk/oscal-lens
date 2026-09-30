@@ -130,8 +130,20 @@ function renderProcessingNotes(result, problem) {
   return renderNotice(problem, true) + result.notes.map(note => renderNotice(note)).join('');
 }
 
-export function renderDocuments(documents, currentIndex, loading = false) {
-  return documents.map((entry, index) => {
+export function renderDocuments(documents, currentIndex, loading = false, collapsed = new Set()) {
+  const labels = {catalog: 'Catalogues', profile: 'Profiles', 'mapping-collection': 'Mapping collections',
+    'component-definition': 'Component definitions', 'system-security-plan': 'System security plans',
+    'assessment-plan': 'Assessment plans', 'assessment-results': 'Assessment results',
+    'plan-of-action-and-milestones': 'Plans of action and milestones'};
+  const groups = new Map();
+  documents.forEach((entry, index) => {
+    const type = model(entry.doc).type;
+    if (!groups.has(type)) groups.set(type, []);
+    groups.get(type).push({entry, index});
+  });
+  return [...groups].map(([type, entries]) => `<details class="document-group" data-model-group="${escapeHtml(type)}"${collapsed.has(type) ? '' : ' open'}>
+    <summary>${escapeHtml(labels[type] || type)} (${entries.length})</summary>
+    ${entries.map(({entry, index}) => {
     const {
       type,
       body
@@ -142,7 +154,7 @@ export function renderDocuments(documents, currentIndex, loading = false) {
     </button><button type="button" class="doc-remove" data-remove-doc="${index}"
       aria-label="${escapeHtml('Remove ' + documentPath(entry) + ' from workspace')}"
       title="${escapeHtml('Remove ' + documentPath(entry) + ' from workspace')}"${loading ? ' disabled' : ''}><span aria-hidden="true">×</span></button></div>`;
-  }).join('');
+  }).join('')}</details>`).join('');
 }
 
 export function renderHeading(entry, type, body, result, issues) {
@@ -326,4 +338,16 @@ function findOriginalPart(parts = [], id) {
     const nested = findOriginalPart(part.parts, id);
     if (nested) return nested;
   }
+}
+
+/** Keep file membership explicit, including identical control IDs in different files. */
+export function renderGraphControlLists(groups) {
+  return groups.map((group, groupIndex) => `<details class="graph-file-controls" open>
+    <summary>${escapeHtml(group.title)} · ${group.related.length} related · ${group.isolated.length} isolated</summary>
+    <p class="graph-file-path">${escapeHtml(group.id)}</p>
+    ${['isolated', 'related'].map(kind => `<details class="graph-control-category" open>
+      <summary>${kind === 'isolated' ? 'Isolated controls' : 'Related controls'} (${group[kind].length})</summary>
+      <div class="graph-control-buttons">${group[kind].map((node, index) => `<button type="button" data-list-group="${groupIndex}" data-list-kind="${kind}" data-list-node="${index}">${escapeHtml(node.label)} · ${escapeHtml(node.title)} · ${node.degree} neighbours</button>`).join('') || `<p>No ${kind} controls.</p>`}</div>
+    </details>`).join('')}
+  </details>`).join('');
 }

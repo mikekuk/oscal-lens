@@ -1,6 +1,8 @@
+// A lazy graph can be opened after deployment in an already-running tab.
+// Bypass pre-grouping modules cached at their original URLs.
 import cytoscape from './vendor/cytoscape.mjs';
-import { mappingGraph, projectGraph } from './graph-model.mjs';
-import { escapeHtml as esc, renderControls, renderFields, renderGraphControlLists } from './views.mjs';
+import { mappingGraph, projectGraph } from './graph-model.mjs?v=20260930-file-groups';
+import { escapeHtml as esc, renderControls, renderFields, renderGraphControlLists } from './views.mjs?v=20260930-file-groups';
 
 /** Mount a workspace-wide graph. Return a disposer so uploads, deletion and tab
  * changes cannot leave an old renderer or event listeners attached. */

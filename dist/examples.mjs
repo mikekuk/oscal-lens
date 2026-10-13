@@ -195,9 +195,10 @@ export function implementationExampleWorkspace() {
   });
   catalog.catalog.groups[0].controls ||= [];
   catalog.catalog.groups[0].controls.push(
-    control('ac-4', 'Information flow enforcement', 'Enforce approved information flow policies.')
+    control('ac-4', 'Information flow enforcement', 'Enforce approved information flow policies.'),
+    control('ac-5', 'Separation of duties', 'Separate duties to reduce the risk of misuse.')
   );
-  profile.profile.imports[0]['include-controls'][0]['with-ids'].push('ac-3', 'ac-4');
+  profile.profile.imports[0]['include-controls'][0]['with-ids'].push('ac-3', 'ac-4', 'ac-5');
   const system = ssp['system-security-plan'];
   system.metadata.title = 'Example SSP — implementation statuses';
   system['system-implementation'].components.push({uuid: providerId, type: 'service', title: 'Shared identity provider',
@@ -213,7 +214,10 @@ export function implementationExampleWorkspace() {
     {uuid: uuid(7), 'control-id': 'au-2', 'by-components': [
       contribution(8, providerId, 'inherited', 'All event logging for this service is inherited from the identity provider.')]},
     {uuid: uuid(9), 'control-id': 'ac-3', 'by-components': [
-      contribution(10, gatewayId, 'not-applicable', 'This illustrative requirement is outside the example system boundary.')]}
+      contribution(10, gatewayId, 'not-applicable', 'This illustrative requirement is outside the example system boundary.')]},
+    {uuid: uuid(14), 'control-id': 'ac-5', 'by-components': [
+      {...contribution(15, gatewayId, 'alternative', 'An independent approval workflow provides an alternative separation-of-duties implementation.'),
+        'implementation-status': {state: 'alternative', remarks: 'Independent approval replaces a separate operator role in this example.'}}]}
   );
   const components = definition['component-definition'].components;
   const implementation = components[0]['control-implementations'][0];

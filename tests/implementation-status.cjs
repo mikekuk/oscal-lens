@@ -9,6 +9,12 @@ test('SSP status rollups distinguish planned, partial, complete, N/A and fully i
   const [{rollupStatus}] = await ready;
   const cases = [
     [[], 'unspecified'], [['implemented'], 'implemented'], [['partial'], 'partial'],
+    [['alternative'], 'alternative'], [['alternative','alternative'], 'alternative'],
+    [['alternative','implemented','inherited','not-applicable'],'alternative'],
+    [['alternative','partial'],'partial'], [['alternative','planned'],'partial'],
+    [['alternative','unspecified'],'unspecified'], [['other'],'other'],
+    [['other','implemented','alternative'],'other'], [['other','partial'],'partial'],
+    [['other','planned'],'partial'], [['other','unspecified'],'unspecified'],
     [['planned'], 'planned'], [['not-applicable'], 'not-applicable'], [['inherited'], 'inherited'],
     [['implemented','inherited','not-applicable'],'implemented'],
     [['inherited','inherited','not-applicable'],'inherited'],
@@ -34,10 +40,16 @@ test('reads native and scoped OSCAL/FedRAMP properties without confusing operati
   assert.equal(declaredStatus({props:[property('implementation-status','N/A')]}), 'not-applicable');
   assert.equal(declaredStatus({...status('planned'),props:[property('implementation-status','implemented'),property('control-origination','inherited')]}), 'planned');
   assert.equal(declaredStatus({...status('implemented'),props:[property('control-origination','inherited')]}), 'inherited');
-  for (const value of [status('alternative'),status('<script>'),{status:{state:'operational'}},{inherited:[{description:'Some inherited responsibility'}]}, {lineage:[{}]}, {props:[property('implementation-status','implemented','https://unrelated.example')]}]) {
+  for (const value of [status(''),status(null),status(42),{status:{state:'operational'}},{inherited:[{description:'Some inherited responsibility'}]}, {lineage:[{}]}, {props:[property('implementation-status','implemented','https://unrelated.example')]}]) {
     assert.equal(declaredStatus(value), 'unspecified');
   }
-  assert.equal(declaredStatus(status('alternative'),'implemented'), 'unspecified');
+  assert.equal(declaredStatus(status('alternative'),'implemented'), 'alternative');
+  assert.equal(declaredStatus(status('locally-defined')), 'other');
+  assert.equal(declaredStatus({...status('alternative'),props:[property('control-origination','inherited')]}), 'alternative');
+  for(const ns of [undefined,'http://csrc.nist.gov/ns/oscal','https://fedramp.gov/ns/oscal']) {
+    assert.equal(declaredStatus({props:[property('implementation-status','alternative',ns)]}), 'alternative');
+    assert.equal(declaredStatus({props:[property('implementation-status','custom-state',ns)]}), 'other');
+  }
 });
 test('section rollups override aggregate claims and inherit only missing status declarations', async()=>{
   const [{nodeStatus}] = await ready;
@@ -115,8 +127,8 @@ test('summary counts each control once and reclassifies multi-component selectio
   const validate=makeValidator(require('../dist/ajv.js'),Object.fromEntries(require('../dist/schemas/manifest.json').map(item=>[`${item.type}@${item.version}`,require('../dist/'+item.path)])));
   for(const entry of docs) assert.deepEqual(validate(entry.doc),[],entry.name);
   const all=summariseImplementation(result);
-  assert.equal(all.total,6); assert.equal(all.selected.size,3);
-  for(const rows of Object.values(all.groups)) assert.equal(rows.length,1);
+  assert.equal(all.total,7); assert.equal(all.selected.size,3);
+  for(const [state,rows] of Object.entries(all.groups)) assert.equal(rows.length,state==='other'?0:1);
   const provider=result.components.find(component=>component.title==='Shared identity provider');
   const excluded=new Set(result.components.filter(component=>component!==provider).map(component=>component.id));
   const one=summariseImplementation(result,excluded);
@@ -131,8 +143,8 @@ test('summary renders accessible pie, counts and grouped lists, including full a
   assert.match(html,/<circle /); assert.doesNotMatch(html,/NaN|Infinity/);
   assert.equal((html.match(/data-summary-component="[^"]+" checked/g)||[]).length,2);
   assert.match(html,/<li><strong>ac-1<\/strong> Access/);
-  assert.equal((html.match(/<details class="summary-status-group/g)||[]).length,6);
-  assert.equal((html.match(/<summary><span class="ssp-status-badge/g)||[]).length,6);
+  assert.equal((html.match(/<details class="summary-status-group/g)||[]).length,8);
+  assert.equal((html.match(/<summary><span class="ssp-status-badge/g)||[]).length,8);
   const empty=renderImplementationSummary(result,new Set(['a','b']));
   assert.match(empty,/No controls in this component selection/); assert.doesNotMatch(empty,/<svg/);
   const rows=structuredClone(result.rows); rows[0].control={id:'x',title:'<script>unsafe</script>'};
@@ -157,4 +169,65 @@ test('SSP Controls preserves profile order and group filtering with full status 
     assert.match(filtered,/Filtered by group/);
   }
   for(const component of result.components) assert.ok(!navigation.includes(`data-group="${component.id}"`));
+});
+
+test('every predefined SSP implementation state in the bundled schemas has the OSCAL label and a colour', async()=>{
+  const [{statusLabels,declaredStatus}]=await ready;
+  const fs=require('node:fs');
+  const css=fs.readFileSync(require('node:path').join(__dirname,'../dist/styles.css'),'utf8');
+  const expected={implemented:'Implemented',partial:'Partial',planned:'Planned',alternative:'Alternative','not-applicable':'Not applicable'};
+  let checked=0;
+  for(const entry of require('../dist/schemas/manifest.json').filter(entry=>entry.type==='system-security-plan')) {
+    const schema=require('../dist/'+entry.path);
+    for(const [key,definition] of Object.entries(schema.definitions)) {
+      if(!key.endsWith(':implementation-status')) continue;
+      const constraints=definition.properties.state.anyOf || definition.properties.state.allOf || [];
+      const states=constraints.find(item=>item.enum)?.enum;
+      if(!states) continue;
+      assert.deepEqual([...states].sort(),Object.keys(expected).sort(),entry.version);
+      for(const state of states) {
+        assert.equal(declaredStatus(status(state)),state);
+        assert.equal(statusLabels[state],expected[state]);
+        assert.ok(css.includes('.ssp-status-'+state+' {'));
+      }
+      checked++;
+    }
+  }
+  assert.ok(checked>0);
+});
+test('alternative and locally defined statuses retain colours, filters, raw details and summary slices', async()=>{
+  const [{controlStatus},{renderControls,renderStatusFilter}]=await ready;
+  const {renderImplementationSummary}=await import('../dist/implementation-summary.mjs');
+  const result=mixedResult(), row=result.rows[0];
+  row.implementations[0].body={'by-components':[contribution('a','alternative'),contribution('b','implemented')]};
+  assert.equal(controlStatus(row),'alternative');
+  let html=renderControls('system-security-plan',result,null,0,'','',{},'alternative');
+  assert.match(html,/1 control shown/);
+  assert.match(html,/class="control ssp-status ssp-status-alternative"/);
+  assert.match(html,/class="part ssp-status ssp-status-alternative"/);
+  assert.doesNotMatch(html,/<details class="control[^>]*\bopen\b/);
+  assert.match(renderStatusFilter(),/<option value="alternative">Alternative/);
+  assert.match(renderStatusFilter(),/<option value="not-applicable">Not applicable/);
+  html=renderImplementationSummary(result);
+  assert.match(html,/summary-slice ssp-status-alternative/);
+  assert.match(html,/Alternative: 1 \(100%\)/);
+  html=renderImplementationSummary(result,new Set(['a']));
+  assert.match(html,/summary-slice ssp-status-implemented/);
+  row.implementations[0].body['by-components'][0]['implementation-status'].state='custom-<script>';
+  html=renderControls('system-security-plan',result,null,0,'','',{},'other');
+  assert.match(html,/1 control shown/);
+  assert.match(html,/ssp-status-other/);
+  assert.match(html,/custom-&lt;script&gt;/);
+  assert.doesNotMatch(html,/<script>/);
+  assert.match(renderImplementationSummary(result),/summary-slice ssp-status-other/);
+});
+test('controls start collapsed for every document type and filtered view', async()=>{
+  const [,{renderControls}]=await ready;
+  for(const type of ['catalog','profile','system-security-plan','component-definition']) {
+    for(const group of ['',type==='component-definition'?'a':'g']) {
+      const html=renderControls(type,mixedResult(),null,0,group,'');
+      assert.match(html,/<details class="control/);
+      assert.doesNotMatch(html,/<details class="control[^>]*\bopen\b/);
+    }
+  }
 });

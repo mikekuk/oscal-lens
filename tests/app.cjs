@@ -114,14 +114,14 @@ test('workspace deletion refreshes profiles, mappings, selection and empty state
     assert.match(element('#panel').innerHTML,/control ssp-status ssp-status-planned/);
     element('.tabs').onclick({target:{closest:()=>({dataset:{tab:'implementation-summary'}})}});
     assert.match(element('#panel').innerHTML,/Implementation Summary/);
-    assert.match(element('#panel').innerHTML,/6 controls/);
+    assert.match(element('#panel').innerHTML,/7 controls/);
     assert.equal(element('#status-options').innerHTML,'');
     element('#panel').onclick({target:{closest:()=>({dataset:{summarySelect:'none'}})}});
     assert.match(element('#panel').innerHTML,/No controls in this component selection/);
     element('#panel').onchange({target:{closest:()=>({dataset:{summaryComponent:'3b77cd32-51ee-405e-a298-163d641519a1'},checked:true})}});
     assert.match(element('#panel').innerHTML,/Implementation status of 3 controls/);
     element('#panel').onclick({target:{closest:()=>({dataset:{summarySelect:'all'}})}});
-    assert.match(element('#panel').innerHTML,/Implementation status of 6 controls/);
+    assert.match(element('#panel').innerHTML,/Implementation status of 7 controls/);
     element('.tabs').onclick({target:{closest:()=>({dataset:{tab:'controls'}})}});
     assert.match(element('#panel').innerHTML,/1 control shown/);
     element('#status-options').onchange({target:{value:''}});

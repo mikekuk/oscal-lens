@@ -85,7 +85,7 @@ export function buildMappingIndex(documents, getPreview = entry => preview(entry
   // Read only direct attachments so inheritance is independent of upload order
   // and never leaks sideways into sibling profiles or unrelated catalogues.
   const direct = new Map(index);
-  for (const entry of documents.filter(entry => entry.doc.profile && includeResource(entry))) {
+  for (const entry of documents.filter(entry => ['profile', 'system-security-plan', 'component-definition'].some(type => entry.doc[type]) && includeResource(entry))) {
     let result;
     try { result = readPreview(entry); } catch { continue; } // The profile view reports import failures.
     const byControl = new Map(direct.get(entry.doc) || []);

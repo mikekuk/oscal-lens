@@ -22,13 +22,14 @@
   <main>
     <section class="intro">
       <div>
-        <p class="eyebrow">CATALOGUES / PROFILES / MAPPINGS</p>
+        <p class="eyebrow">CATALOGUES / PROFILES / COMPONENTS / SSPS / MAPPINGS</p>
         <h1>See the controls.<br><span>Keep the context.</span></h1>
-        <p>Explore requirements, profile selections and the material between them.</p>
+        <p>Explore requirements, components, system implementations and their mappings.</p>
       </div>
       <div class="local"><strong>Documents stay in your browser</strong>
-        <p>Open your oscal-content folder to connect profiles, catalogues and mapping collections,
-          or select individual files.</p><button id="demo">Load example workspace ↗</button>
+        <p>Open your oscal-content folder to connect profiles, catalogues, SSPs, component definitions and mapping collections,
+          or select individual files.</p><button id="implementation-demo">SSP / component example</button>
+        <button id="demo">Load example workspace ↗</button>
       </div>
     </section>
     <div id="message" role="status" aria-live="polite"></div>
@@ -37,13 +38,13 @@
         <div class="side-title">WORKSPACE <span id="doc-count">0 files</span></div>
         <div id="documents"></div><label class="search-label" for="search">Find a
           control</label><input id="search" type="search" placeholder="ID, title or requirement…">
-        <div class="side-title">GROUPS <button id="all-groups">Show all</button></div>
+        <div class="side-title"><span id="group-label">GROUPS</span> <button id="all-groups">Show all</button></div>
         <nav id="groups" aria-label="Catalogue groups"></nav>
         <fieldset class="section-settings">
           <legend>Control sections</legend>
           <div id="section-options"></div>
         </fieldset>
-        <p class="side-foot">Catalogue/profile: OSCAL 1.0.4<br>Mappings: OSCAL 1.2.3<br>JSON · Local processing</p>
+        <p class="side-foot">OSCAL 1.0.0–1.2.3<br>Mappings: OSCAL 1.2.0–1.2.3<br>JSON · Local processing</p>
       </aside>
       <article>
         <div id="heading"></div>

@@ -15,7 +15,7 @@ export function statementParts(parts = [], path = []) {
 export function mappingGraph(documents, getPreview, mappingIndex) {
   const resources = [], nodes = [], occurrences = [], notices = new Set();
   const rowsByDoc = new Map(), nodesByRow = new Map();
-  for (const entry of documents.filter(entry => ['catalog', 'profile'].includes(model(entry.doc).type))) {
+  for (const entry of documents.filter(entry => ['catalog', 'profile', 'system-security-plan', 'component-definition'].includes(model(entry.doc).type))) {
     const id = documentPath(entry), {type, body} = model(entry.doc);
     resources.push({id, entry, type, title: body.metadata?.title || id});
     try {

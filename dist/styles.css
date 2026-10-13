@@ -794,3 +794,70 @@ footer a {
 @media (max-width: 900px) {
   #documents { display: block; }
 }
+
+/* SSP status colours are scoped to summaries and each implementation contribution,
+   so a rolled-up control never paints its differently rated components. */
+.ssp-status-implemented { --ssp-colour: #72d7a0; --ssp-tint: #18362c; }
+.ssp-status-partial { --ssp-colour: #f3c66c; --ssp-tint: #3b3020; }
+.ssp-status-planned { --ssp-colour: #ff9494; --ssp-tint: #3d232b; }
+.ssp-status-not-applicable { --ssp-colour: #bbc1ca; --ssp-tint: #2d323b; }
+.ssp-status-inherited { --ssp-colour: #86bbff; --ssp-tint: #1d304d; }
+.ssp-status-unspecified { --ssp-colour: #9daec4; --ssp-tint: #172338; }
+.control.ssp-status { border-color: var(--ssp-colour); }
+.control.ssp-status > summary { background: var(--ssp-tint); border-left: 4px solid var(--ssp-colour); }
+.part.ssp-status, .matter-block.ssp-status {
+  border-left: 4px solid var(--ssp-colour);
+  background: var(--ssp-tint);
+  padding: 12px 16px;
+}
+.ssp-status-badge {
+  display: inline-block;
+  color: var(--ssp-colour);
+  background: var(--ssp-tint);
+  border: 1px solid var(--ssp-colour);
+  border-radius: 4px;
+  padding: 2px 7px;
+  margin: 3px 0 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  vertical-align: middle;
+}
+.ssp-status-legend { margin-bottom: 18px; }
+.ssp-status-legend .ssp-status-badge { margin-left: 0; margin-right: 8px; }
+.ssp-status-legend p { color: #bac8dd; font-size: 12px; line-height: 1.6; }
+
+[hidden] { display: none !important; }
+#implementation-status-filter {
+  width: 100%; font: inherit; font-size: 13px; padding: 9px;
+  border: 1px solid #344258; border-radius: 6px; background: #182339; color: #e5ecf8;
+  margin: 8px 0 18px;
+}
+select:focus-visible { outline: 3px solid #81ddc8; outline-offset: 3px; }
+.tabs { flex-wrap: wrap; }
+.summary-components { border: 1px solid #344258; border-radius: 6px; padding: 14px; }
+.summary-components label { display: block; margin: 10px 0; font-size: 14px; }
+.summary-selection-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.summary-selection-actions button { font-size: 12px; padding: 5px 9px; }
+.summary-scope { color: #bac8dd; font-size: 13px; line-height: 1.6; }
+.summary-chart { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 24px; margin: 24px 0 32px; }
+.implementation-pie { width: min(100%, 280px); height: auto; }
+.summary-slice { fill: var(--ssp-colour); stroke: #0a101c; stroke-width: 2px; }
+.summary-key { list-style: none; padding: 0; margin: 0; min-width: 240px; }
+.summary-key li { display: grid; grid-template-columns: 1fr 30px 45px; align-items: center; gap: 10px; margin: 8px 0; }
+.summary-key .ssp-status-badge { margin-left: 0; justify-self: start; }
+.summary-key li > span:last-child { color: #bac8dd; font-size: 13px; text-align: right; }
+.summary-status-group { border-left: 4px solid var(--ssp-colour); padding: 4px 14px; margin: 20px 0; }
+.summary-status-group > summary { font-size: 14px; margin: 8px 0; }
+.summary-status-group .ssp-status-badge { margin-left: 0; }
+.summary-status-group ul { padding-left: 20px; }
+.summary-status-group li { margin: 12px 0; line-height: 1.6; overflow-wrap: anywhere; }
+.summary-status-group li strong { font-family: ui-monospace, monospace; margin-right: 8px; }
+.summary-status-group small { display: block; color: #bac8dd; }
+.summary-status-group p { font-size: 13px; color: #bac8dd; }
+
+.ssp-control-status-group { margin: 24px 0; }
+.ssp-control-status-group > summary { font-size: 14px; padding: 12px 0; }
+.status-group-controls { padding-top: 8px; }
+.ssp-control-status-group > summary .ssp-status-badge { margin-left: 0; font-size: 14px; }
+.ssp-control-status-group > summary > span:last-child { color: #bac8dd; font-weight: 400; }

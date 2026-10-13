@@ -1,3 +1,4 @@
+import { renderImplementationSummary } from './implementation-summary.mjs';
 import { createGraphState, mountGraphSettings } from './graph-settings.mjs';
 import { buildMappingIndex } from './mappings.mjs';
 /** Browser state, event handling and startup. Pure HTML lives in views.mjs. */
@@ -14,8 +15,7 @@ import {
   exampleProfile,
   exampleMappedCatalog,
   exampleMapping,
-  exampleSSP,
-  exampleComponentDefinition
+  implementationExampleWorkspace
 } from './examples.mjs';
 import {
   escapeHtml,
@@ -24,6 +24,7 @@ import {
   renderHeading,
   renderGroups,
   renderComponentDetails,
+  renderStatusFilter,
   renderValidation,
   renderSource,
   renderGreyMatter,
@@ -37,6 +38,8 @@ const collapsedDocumentGroups = new Set();
 let currentDocumentIndex = 0;
 let tab = 'controls';
 let group = '';
+let statusFilter = '';
+let summaryExclusions = new WeakMap();
 let validate;
 let loading = false;
 // Display preferences last for this session; assessment sections start hidden.
@@ -64,8 +67,13 @@ function renderWorkspace() {
   disposeGraph = undefined;
   select('#doc-count').textContent = documents.length + ' files';
   select('#documents').innerHTML = renderDocuments(documents, currentDocumentIndex, loading, collapsedDocumentGroups);
+  const isSSP = !!documents[currentDocumentIndex]?.doc['system-security-plan'];
+  select('#implementation-summary-tab').hidden = !isSSP;
+  if (!isSSP && tab === 'implementation-summary') tab = 'controls';
+  select('#search').disabled = tab === 'implementation-summary';
+  select('#control-settings').hidden = tab === 'implementation-summary';
   if (!documents.length) {
-    for (const selector of ['#heading', '#issue-count', '#groups', '#section-options']) {
+    for (const selector of ['#heading', '#issue-count', '#groups', '#section-options', '#status-options']) {
       select(selector).innerHTML = '';
     }
     select('#panel').innerHTML = renderNotice('No files loaded. Open files or a folder, or load the example workspace.');
@@ -79,7 +87,7 @@ function renderWorkspace() {
 
   if (tab === 'graph') {
     select('#heading').innerHTML = '<h2>Mapping network</h2>';
-    for (const selector of ['#issue-count', '#groups', '#section-options']) select(selector).innerHTML = '';
+    for (const selector of ['#issue-count', '#groups', '#section-options', '#status-options']) select(selector).innerHTML = '';
     disposeGraph = mountGraphSettings(select('#panel'), documents, cachedPreview, validate, graphState);
     return;
   }
@@ -120,9 +128,14 @@ function renderWorkspace() {
   select('#groups').innerHTML = renderGroups(type === 'catalog' ? [body] : result.sources, result, group);
 
   select('#section-options').innerHTML = renderSectionOptions(result.rows, sectionVisibility);
+  select('#status-options').innerHTML = type === 'system-security-plan' && tab === 'controls' ? renderStatusFilter(statusFilter) : '';
+  // Summary component selection is independent of the single-component control view.
+  if (tab === 'implementation-summary') select('#groups').innerHTML = '<p class="side-foot">Choose components in the summary.</p>';
 
   const panel = select('#panel');
-  if (tab === 'validation') {
+  if (tab === 'implementation-summary') {
+    panel.innerHTML = renderImplementationSummary(result, summaryExclusions.get(entry.doc), problem, errorCount);
+  } else if (tab === 'validation') {
     panel.innerHTML = renderValidation(issues, result, problem, type, body.metadata?.['oscal-version']);
   } else if (tab === 'source') {
     panel.innerHTML = renderSource(entry.doc);
@@ -133,7 +146,7 @@ function renderWorkspace() {
     panel.innerHTML = renderNotice('Mappings are added automatically when you select a referenced catalogue or profile.') + result.notes.map(note => renderNotice(note, true)).join('') + renderSource(entry.doc);
   } else {
     const query = select('#search').value.trim().toLowerCase();
-    panel.innerHTML = renderControls(type, result, problem, errorCount, group, query, sectionVisibility);
+    panel.innerHTML = renderControls(type, result, problem, errorCount, group, query, sectionVisibility, statusFilter);
   }
 }
 
@@ -156,6 +169,7 @@ function render() {
 }
 
 function loadDemo(implementations = false) {
+  summaryExclusions = new WeakMap();
   previewCache = new WeakMap();
   mappingCache = undefined;
   documents = [{
@@ -166,11 +180,13 @@ function loadDemo(implementations = false) {
     doc: structuredClone(exampleCatalog)
   }, {name: 'example-assurance.json', doc: structuredClone(exampleMappedCatalog)},
   {name: 'example-mapping.json', doc: structuredClone(exampleMapping)}];
-  if (implementations === true) documents.push(
-    {name: 'example-ssp.json', doc: structuredClone(exampleSSP)},
-    {name: 'example-component.json', doc: structuredClone(exampleComponentDefinition)});
+  if (implementations === true) {
+    documents = implementationExampleWorkspace();
+    tab = 'controls';
+  }
   currentDocumentIndex = implementations === true ? 4 : 0;
   group = '';
+  statusFilter = '';
   select('#search').value = '';
   notice('Example workspace loaded. These documents are illustrative, not an official baseline.');
   render()
@@ -185,6 +201,7 @@ function removeDocument(index) {
   previewCache = new WeakMap();
   mappingCache = undefined;
   group = '';
+  statusFilter = '';
   if (removed === selected) select('#search').value = '';
   notice(`Removed ${documentPath(removed)} from the workspace. Your original file is unchanged.`);
   render();
@@ -193,6 +210,30 @@ function removeDocument(index) {
   (buttons[Math.min(index, buttons.length - 1)] || select('#files')).focus();
 }
 // Event delegation survives re-rendering the document and group buttons.
+select('#status-options').onchange = event => {
+  statusFilter = event.target.value;
+  render();
+  select('#implementation-status-filter').focus();
+};
+select('#panel').onchange = event => {
+  const input = event.target.closest('[data-summary-component]');
+  if (!input) return;
+  const doc = documents[currentDocumentIndex].doc;
+  const excluded = summaryExclusions.get(doc) || new Set();
+  if (input.checked) excluded.delete(input.dataset.summaryComponent);
+  else excluded.add(input.dataset.summaryComponent);
+  summaryExclusions.set(doc, excluded);
+  render();
+  [...select('#panel').querySelectorAll('[data-summary-component]')].find(option => option.dataset.summaryComponent === input.dataset.summaryComponent)?.focus();
+};
+select('#panel').onclick = event => {
+  const button = event.target.closest('[data-summary-select]');
+  if (!button) return;
+  const entry = documents[currentDocumentIndex];
+  summaryExclusions.set(entry.doc, new Set(button.dataset.summarySelect === 'none' ? cachedPreview(entry).components.map(component => component.id) : []));
+  render();
+  [...select('#panel').querySelectorAll('[data-summary-select]')].find(option => option.dataset.summarySelect === button.dataset.summarySelect)?.focus();
+};
 select('#section-options').onchange = event => {
   const input = event.target.closest('[data-section]');
   if (!input) return;
@@ -207,6 +248,7 @@ select('#demo').onclick = () => loadDemo();
 select('#implementation-demo').onclick = () => loadDemo(true);
 select('#all-groups').onclick = () => {
   group = '';
+  if (tab === 'implementation-summary') summaryExclusions.set(documents[currentDocumentIndex].doc, new Set());
   render()
 };
 select('#search').oninput = render;
@@ -229,6 +271,7 @@ select('#documents').onclick = event => {
   if (button) {
     currentDocumentIndex = Number(button.dataset.doc);
     group = '';
+    statusFilter = '';
     render()
   }
 };
@@ -247,7 +290,7 @@ select('.tabs').onclick = event => {
   }
 };
 select('.tabs').onkeydown = event => {
-  const tabButtons = [...document.querySelectorAll('[role=tab]')];
+  const tabButtons = [...document.querySelectorAll('[role=tab]')].filter(button => !button.hidden);
   let i = tabButtons.indexOf(document.activeElement);
   if (i < 0) return;
   if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
@@ -287,6 +330,7 @@ async function openDocuments(event, folder = false) {
       documents
       .length - 1);
     group = '';
+    statusFilter = '';
     select('#search').value = '';
     notice([`${result.added} OSCAL file(s) loaded.`, result.skipped ?
       `${result.skipped} other file(s) skipped.` : '', ...result.errors.slice(0, 5), result
@@ -300,6 +344,7 @@ async function openDocuments(event, folder = false) {
     select('#files').disabled = false;
     select('#folder').disabled = false;
     select('#demo').disabled = false;
+    select('#implementation-demo').disabled = false;
   }
 }
 select('#files').onchange = event => openDocuments(event);
@@ -321,6 +366,7 @@ try {
     if (!cache.has(doc)) cache.set(doc, check(doc));
     return cache.get(doc)
   };
+  for (const selector of ['#files', '#folder', '#demo', '#implementation-demo']) select(selector).disabled = false;
   loadDemo()
 } catch (event) {
   notice('Could not start validation: ' + event.message, true);

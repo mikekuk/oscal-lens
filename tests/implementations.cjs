@@ -22,20 +22,25 @@ test('SSP includes declared components, requirement and statement references, an
   assert.match(result.notes.join(' '),/undefined component: unknown/);
   assert.equal(JSON.stringify(docs),before);
 });
-test('component filtering shows only its contributions, retains empty definitions, and escapes prose', async()=>{
+test('SSP group filtering retains all contributions and component details remain separately available', async()=>{
   const {get,ssp,views}=await workspace();
   const body=ssp.doc['system-security-plan'], req=body['control-implementation']['implemented-requirements'][0];
   req['by-components'].push({'component-uuid':'other',description:'OTHER-PRIVATE-NARRATIVE'});
   req.statements[0]['by-components'].push({'component-uuid':'other',description:'OTHER-STATEMENT'});
   req['by-components'][0].description='<script>alert(1)</script>';
-  const result=get(ssp), id=result.components[0].id;
-  const html=views.renderControls('system-security-plan',result,null,0,id,'');
+  const result=get(ssp);
+  const html=views.renderControls('system-security-plan',result,null,0,'ac-policy','');
   assert.match(html,/&lt;script&gt;alert/);
-  assert.doesNotMatch(html,/<script>|OTHER-PRIVATE-NARRATIVE|OTHER-STATEMENT/);
+  assert.doesNotMatch(html,/<script>/);
+  assert.match(html,/OTHER-PRIVATE-NARRATIVE/);
+  assert.match(html,/OTHER-STATEMENT/);
   assert.match(html,/Gateway policy review/);
-  const empty=views.renderControls('system-security-plan',result,null,0,result.components[1].id,'');
-  assert.match(empty,/Reporting service/); assert.match(empty,/No controls match/);
-  assert.match(views.renderGroups([],result,id),/Defined · Implemented/);
+  assert.doesNotMatch(html,/Defined component|Reporting service/);
+  const components=views.renderComponentDetails(result);
+  assert.match(components,/Reporting service · Defined component · No implementation recorded/);
+  assert.match(components,/Undefined component · Implementation recorded/);
+  assert.match(components,/Access gateway/);
+
 });
 test('SSPs and component definitions inherit exact profile mappings in any upload order and project them in graphs', async()=>{
   const {docs,get,ssp,cd,mappings,settings,graph}=await workspace();

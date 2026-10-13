@@ -171,8 +171,8 @@ export function renderHeading(entry, type, body, result, issues) {
   </div><span class="badge ${issues.length ? 'warn' : ''}">${status}</span>`;
 }
 
-export function renderGroups(sources, result, selectedGroup) {
-  if (result.components) return result.components.map(component => {
+export function renderGroups(sources, result, selectedGroup, byComponent = !!result.components) {
+  if (byComponent) return (result.components || []).map(component => {
     const count = result.rows.filter(row => row.componentIds?.includes(component.id)).length;
     return `<button class="group ${selectedGroup === component.id ? 'active' : ''}" data-group="${escapeHtml(component.id)}">
       ${escapeHtml(component.title)} <small>(${count}) · ${component.defined ? 'Defined' : 'Undefined'}${component.implemented ? ' · Implemented' : ''}</small>
@@ -283,9 +283,10 @@ function renderControl(row, index, visibility, includeMappings = true) {
 }
 
 export function renderControls(type, result, problem, errorCount, selectedGroup, query, visibility = {}, selectedStatus = '') {
+  const byComponent = type === 'component-definition';
   const rows = result.rows.filter(row => {
-    const inGroup = !selectedGroup || (result.components ? row.componentIds?.includes(selectedGroup) : row.groups.some(group => (group.id || group.title) === selectedGroup));
-    const inStatus = type !== 'system-security-plan' || !selectedStatus || controlStatus(row, selectedGroup) === selectedStatus;
+    const inGroup = !selectedGroup || (byComponent ? row.componentIds?.includes(selectedGroup) : row.groups.some(group => (group.id || group.title) === selectedGroup));
+    const inStatus = type !== 'system-security-plan' || !selectedStatus || controlStatus(row) === selectedStatus;
     return inGroup && inStatus && substituteParameters(JSON.stringify([row.control, row.implementations, result.components?.filter(component => row.componentIds?.includes(component.id))]), row.parameters).toLowerCase()
       .includes(query);
   });
@@ -297,17 +298,13 @@ export function renderControls(type, result, problem, errorCount, selectedGroup,
   const emptyMessage = problem ? 'Load the missing source files to see the controls.' :
     'No controls match this view.';
   let controlIndex = 0;
-  const renderRow = row => renderControl({...row, selectedComponent: result.components ? selectedGroup : undefined,
+  const renderRow = row => renderControl({...row, selectedComponent: byComponent ? selectedGroup : undefined,
     componentDefinitions: result.components, sspStatus: type === 'system-security-plan'}, controlIndex++, visibility);
-  const controls = !rows.length ? `<div class="empty">${emptyMessage}</div>` : type === 'system-security-plan'
-    ? Object.entries(statusLabels).map(([status, label]) => {
-      const members = rows.filter(row => controlStatus(row, selectedGroup) === status);
-      return members.length ? `<details class="ssp-control-status-group" aria-label="${label} controls"><summary>${statusBadge(status)} <span>${members.length} ${members.length === 1 ? 'control' : 'controls'}</span></summary><div class="status-group-controls">${members.map(renderRow).join('')}</div></details>` : '';
-    }).join('') : rows.map(renderRow).join('');
+  const controls = !rows.length ? `<div class="empty">${emptyMessage}</div>` : rows.map(renderRow).join('');
   return `${type === 'system-security-plan' ? renderStatusLegend() : ''}${previewNotice}${type === 'profile' ? '<p class="profile-legend"><span class="profile-change">Dotted underline</span> = added or changed by a profile layer. Other text comes from the catalogue.</p>' : ''}${invalidNotice}<p class="odp-legend"><span class="odp odp-filled">Filled</span> explicit value · <span class="odp odp-constrained">Constrained</span> restriction or selection, not assigned · <span class="odp odp-open">Open</span> organisation-defined. Parameter details are available using the Parameters toggle.</p>${renderProcessingNotes(result, problem)}
     <div class="count"><span>${rows.length} ${rows.length === 1 ? 'control' : 'controls'} shown</span>
-      <span>${result.components ? (selectedGroup ? 'Filtered by component' : 'All components') : (selectedGroup ? 'Filtered by group' : 'All groups')}</span>
-    </div>${renderComponentDetails(result, selectedGroup)}${controls}`;
+      <span>${byComponent ? (selectedGroup ? 'Filtered by component' : 'All components') : (selectedGroup ? 'Filtered by group' : 'All groups')}</span>
+    </div>${byComponent ? renderComponentDetails(result, selectedGroup) : ''}${controls}`;
 }
 
 

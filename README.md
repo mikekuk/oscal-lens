@@ -187,8 +187,8 @@ this browser session and do not modify uploaded OSCAL files.
 
 Open `system-security-plan` and `component-definition` JSON files alongside their profiles, catalogues and mapping collections. **SSP / component example** loads a demonstration workspace.
 
-- The component sidebar works like the catalogue group sidebar. It includes every declared component, even those with no implementation, and labels undefined component references. Counts show the controls with recorded contributions for each component.
-- SSPs follow `import-profile`, retaining the selected baseline controls and profile tailoring. Requirement-level and statement-level `by-components` associate implementation narratives with components. Selecting a component filters both controls and contributions. Controls without implementations remain available under **Show all**.
+- Component definitions use a component sidebar, which works like the catalogue group sidebar. It includes every declared component, even those with no implementation, and labels undefined component references. Counts show the controls with recorded contributions for each component.
+- SSPs follow `import-profile`, retaining the selected baseline controls and profile tailoring. Requirement-level and statement-level `by-components` associate implementation narratives with components. The Controls tab lists controls in profile order, with group navigation inherited from the profile and all component contributions visible when expanded. The SSP **Components** tab lists declared and referenced components, including those with no implementation and undefined references.
 - Component definitions follow each `control-implementations.source` to a loaded profile or catalogue. Recursive `import-component-definitions`, capability contributions and `incorporates-components` references are included. Missing sources, import cycles, duplicate definitions and ambiguous controls produce notices; original narratives remain inspectable.
 - Mappings inherit through the exact source profile/catalogue ancestry, including nested profiles. Matching control IDs in unrelated documents do not inherit mappings. SSPs and component definitions can also be selected in the mapping graph. Inherited mappings describe source requirements, not an assessment of implementation equivalence or compliance.
 - SSP-wide and requirement-level parameter assignments override inherited values in their scope. Component and statement assignments apply within their narrative; component-definition assignments do not change shared profile requirement text.
@@ -198,7 +198,7 @@ This is an implementation inspection preview, not an SSP or component-definition
 
 ## SSP implementation status colours
 
-SSP control headers, expanded statements and component contributions show a colour and a text status label. Selecting a component recalculates the control rollup using only its visible contributions.
+SSP control headers, expanded statements and component contributions show a colour and a text status label. Controls combine all recorded component contributions; selecting components on Implementation Summary recalculates the summary using only those contributions.
 
 | Sections in the current view | Control colour |
 | --- | --- |
@@ -215,7 +215,7 @@ Full inheritance is indicated by an explicit `inherited` state or `control-origi
 
 ### Filtering and Implementation Summary
 
-Selecting an SSP adds an **Implementation status** filter to the Controls view. It combines with the component and text filters. The SSP Controls list is grouped under expandable status headings; each control appears once under its combined status, and selecting a component recalculates its group. **Implementation Summary** shows a pie chart and a list of controls grouped by status, including a neutral category for missing statuses. Text labels, counts and percentages accompany the colours. The Controls view and summary both use expandable status groups, initially collapsed, with counts visible in each heading.
+Selecting an SSP adds an **Implementation status** filter to the Controls view. It combines with the profile group and text filters while preserving control order and status colours. **Implementation Summary** shows a pie chart and a list of controls grouped by status, including a neutral category for missing statuses. Text labels, counts and percentages accompany the colours. Only the summary uses expandable status groups, initially collapsed, with counts visible in each heading.
 
 The summary starts with all components selected and includes baseline controls without implementation records. Its component checkboxes are independent of the Controls view filters. Selecting a subset recalculates each participating control from just those components' contributions; each control is counted once. Clearing the component selection shows an empty summary. Selection is retained per SSP while moving between tabs.
 

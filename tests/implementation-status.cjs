@@ -55,7 +55,7 @@ test('section rollups override aggregate claims and inherit only missing status 
 });
 function mixedResult() {
   return {sources:[],notes:[],components:[{id:'a',title:'Local service',defined:true,implemented:true,body:{}},{id:'b',title:'External service',defined:true,implemented:true,body:{}}], rows:[{
-    control:{id:'ac-1',title:'Access'},groups:[],parents:[],parameters:{}, componentIds:['a','b'],
+    control:{id:'ac-1',title:'Access'},groups:[{id:'g',title:'Access group'}],parents:[],parameters:{}, componentIds:['a','b'],
     implementations:[{componentIds:['a','b'],body:{statements:[
       {'statement-id':'ac-1.a','by-components':[contribution('a','implemented'),contribution('b','inherited')]},
       {'statement-id':'ac-1.b','by-components':[contribution('a','planned'),contribution('b','not-applicable')]}
@@ -71,10 +71,10 @@ test('component scope recomputes the control colour and preserves individual sec
   const all=renderControls('system-security-plan',result,null,0,'','');
   assert.match(all,/<details class="control ssp-status ssp-status-partial"/);
   for(const state of ['implemented','planned','inherited','not-applicable']) assert.match(all,new RegExp('<div class="part ssp-status ssp-status-'+state+'">'));
-  const external=renderControls('system-security-plan',result,null,0,'b','');
-  assert.match(external,/<details class="control ssp-status ssp-status-inherited"/);
-  assert.doesNotMatch(external,/<div class="part ssp-status ssp-status-planned">|a narrative/);
-  assert.match(external,/b narrative/);
+  const grouped=renderControls('system-security-plan',result,null,0,'g','');
+  assert.match(grouped,/<details class="control ssp-status ssp-status-partial"/);
+  assert.match(grouped,/a narrative/);
+  assert.match(grouped,/b narrative/);
   assert.equal(JSON.stringify(result),before);
 });
 test('unrecorded controls stay unspecified; non-SSP views do not receive SSP colour classes', async()=>{
@@ -97,15 +97,15 @@ test('SSP preview colours reflect explicit contributions, not inherited profile 
   result=preview(ssp,docs);
   assert.match(renderControls('system-security-plan',result,null,0,'',''),/<details class="control ssp-status ssp-status-partial"/);
 });
-test('status filter combines with component and text filters and never changes the underlying rows', async()=>{
+test('status filter combines with profile group and text filters and never changes the underlying rows', async()=>{
   const [,{renderControls}] = await ready;
   const result=mixedResult();
-  const render=(component,query,state)=>renderControls('system-security-plan',result,null,0,component,query,{},state);
+  const render=(group,query,state)=>renderControls('system-security-plan',result,null,0,group,query,{},state);
   assert.match(render('','','partial'),/1 control shown/);
   assert.match(render('','','implemented'),/0 controls shown/);
-  assert.match(render('b','','inherited'),/1 control shown/);
-  assert.match(render('b','no-match','inherited'),/0 controls shown/);
-  assert.match(render('a','','inherited'),/0 controls shown/);
+  assert.match(render('g','','partial'),/1 control shown/);
+  assert.match(render('g','no-match','partial'),/0 controls shown/);
+  assert.match(render('g','','inherited'),/0 controls shown/);
   assert.equal(result.rows.length,1);
 });
 test('summary counts each control once and reclassifies multi-component selections', async()=>{
@@ -141,19 +141,20 @@ test('summary renders accessible pie, counts and grouped lists, including full a
   assert.equal((html.match(/<path /g)||[]).length,2);
   assert.match(html,/&lt;script&gt;unsafe/); assert.doesNotMatch(html,/<script>/);
 });
-test('SSP Controls groups each full control under its rolled-up status and regroups per component', async()=>{
-  const [,{renderControls},{preview},{implementationExampleWorkspace}]=await ready;
+test('SSP Controls preserves profile order and group filtering with full status colours', async()=>{
+  const [{controlStatus},{renderControls,renderGroups},{preview},{implementationExampleWorkspace}]=await ready;
   const docs=implementationExampleWorkspace(), result=preview(docs[4].doc,docs);
+  const controlIds=html=>[...html.matchAll(/<details class="control ssp-status ssp-status-[^"]+"[^>]*>\s*<summary><span class="id">([^<]+)/g)].map(match=>match[1]);
   const html=renderControls('system-security-plan',result,null,0,'','');
-  const sections=[...html.matchAll(/<details class="ssp-control-status-group" aria-label="([^"]+)">([\s\S]*?)(?=<details class="ssp-control-status-group"|$)/g)];
-  assert.deepEqual(sections.map(match=>match[1]),['Implemented controls','Partial controls','Planned controls','N/A controls','Inherited controls','Status not specified controls']);
-  const ids=['ac-2','ac-1','ac-2.1','ac-3','au-2','ac-4'];
-  sections.forEach((match,i)=>{
-    assert.equal((match[2].match(/<details class="control /g)||[]).length,1);
-    assert.ok(match[2].includes(`<span class="id">${ids[i]}</span>`));
-  });
-  const filtered=renderControls('system-security-plan',result,null,0,'3b77cd32-51ee-405e-a298-163d641519a1','');
-  assert.equal((filtered.match(/class="ssp-control-status-group"/g)||[]).length,1);
-  assert.match(filtered,/aria-label="Inherited controls"/);
-  assert.equal((filtered.match(/<details class="control /g)||[]).length,3);
+  assert.deepEqual(controlIds(html),result.rows.map(row=>row.control.id));
+  assert.doesNotMatch(html,/ssp-control-status-group|Defined component|Undefined component/);
+  for(const row of result.rows) assert.ok(html.includes(`class="control ssp-status ssp-status-${controlStatus(row)}"`));
+  const navigation=renderGroups(result.sources,result,'',false);
+  for(const id of ['ac','ac-policy','au']) {
+    assert.ok(navigation.includes(`data-group="${id}"`));
+    const filtered=renderControls('system-security-plan',result,null,0,id,'');
+    assert.deepEqual(controlIds(filtered),result.rows.filter(row=>row.groups.some(group=>group.id===id)).map(row=>row.control.id));
+    assert.match(filtered,/Filtered by group/);
+  }
+  for(const component of result.components) assert.ok(!navigation.includes(`data-group="${component.id}"`));
 });

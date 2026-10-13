@@ -855,9 +855,3 @@ select:focus-visible { outline: 3px solid #81ddc8; outline-offset: 3px; }
 .summary-status-group li strong { font-family: ui-monospace, monospace; margin-right: 8px; }
 .summary-status-group small { display: block; color: #bac8dd; }
 .summary-status-group p { font-size: 13px; color: #bac8dd; }
-
-.ssp-control-status-group { margin: 24px 0; }
-.ssp-control-status-group > summary { font-size: 14px; padding: 12px 0; }
-.status-group-controls { padding-top: 8px; }
-.ssp-control-status-group > summary .ssp-status-badge { margin-left: 0; font-size: 14px; }
-.ssp-control-status-group > summary > span:last-child { color: #bac8dd; font-weight: 400; }

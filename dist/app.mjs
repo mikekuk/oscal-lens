@@ -69,9 +69,10 @@ function renderWorkspace() {
   select('#documents').innerHTML = renderDocuments(documents, currentDocumentIndex, loading, collapsedDocumentGroups);
   const isSSP = !!documents[currentDocumentIndex]?.doc['system-security-plan'];
   select('#implementation-summary-tab').hidden = !isSSP;
-  if (!isSSP && tab === 'implementation-summary') tab = 'controls';
-  select('#search').disabled = tab === 'implementation-summary';
-  select('#control-settings').hidden = tab === 'implementation-summary';
+  select('#components-tab').hidden = !isSSP;
+  if (!isSSP && ['implementation-summary', 'components'].includes(tab)) tab = 'controls';
+  select('#search').disabled = ['implementation-summary', 'components'].includes(tab);
+  select('#control-settings').hidden = ['implementation-summary', 'components'].includes(tab);
   if (!documents.length) {
     for (const selector of ['#heading', '#issue-count', '#groups', '#section-options', '#status-options']) {
       select(selector).innerHTML = '';
@@ -123,25 +124,32 @@ function renderWorkspace() {
   const errorCount = issues.filter(issue => issue.severity === 'error').length;
   select('#heading').innerHTML = renderHeading(entry, type, body, result, issues);
   select('#issue-count').textContent = issues.length ? `(${issues.length})` : '';
-  select('#group-label').textContent = result.components ? 'COMPONENTS' : 'GROUPS';
-  select('#groups').setAttribute('aria-label', result.components ? 'Components' : 'Catalogue groups');
-  select('#groups').innerHTML = renderGroups(type === 'catalog' ? [body] : result.sources, result, group);
+  const byComponent = type === 'component-definition';
+  const componentTab = ['implementation-summary', 'components'].includes(tab);
+  select('#group-label').textContent = byComponent || componentTab ? 'COMPONENTS' : 'GROUPS';
+  select('#groups').setAttribute('aria-label', byComponent || componentTab ? 'Components' : 'Catalogue groups');
+  select('#groups').innerHTML = renderGroups(type === 'catalog' ? [body] : result.sources, result, group, byComponent);
 
   select('#section-options').innerHTML = renderSectionOptions(result.rows, sectionVisibility);
   select('#status-options').innerHTML = type === 'system-security-plan' && tab === 'controls' ? renderStatusFilter(statusFilter) : '';
-  // Summary component selection is independent of the single-component control view.
+  // Summary component selection is independent of the Controls view filters.
   if (tab === 'implementation-summary') select('#groups').innerHTML = '<p class="side-foot">Choose components in the summary.</p>';
+
+  if (tab === 'components') select('#groups').innerHTML = '<p class="side-foot">All defined and referenced components are shown.</p>';
 
   const panel = select('#panel');
   if (tab === 'implementation-summary') {
     panel.innerHTML = renderImplementationSummary(result, summaryExclusions.get(entry.doc), problem, errorCount);
+  } else if (tab === 'components') {
+    panel.innerHTML = '<h3>Components</h3>' + (problem ? renderNotice(problem, true) : '') +
+      (renderComponentDetails(result) || renderNotice('No components in this SSP.'));
   } else if (tab === 'validation') {
     panel.innerHTML = renderValidation(issues, result, problem, type, body.metadata?.['oscal-version']);
   } else if (tab === 'source') {
     panel.innerHTML = renderSource(entry.doc);
   } else if (tab === 'matter') {
     const roots = type === 'catalog' ? [body] : [body, ...result.sources];
-    panel.innerHTML = renderComponentDetails(result, group) + renderGreyMatter(roots, result.components ? '' : group, problem);
+    panel.innerHTML = (byComponent ? renderComponentDetails(result, group) : '') + renderGreyMatter(roots, byComponent ? '' : group, problem);
   } else if (type === 'mapping-collection') {
     panel.innerHTML = renderNotice('Mappings are added automatically when you select a referenced catalogue or profile.') + result.notes.map(note => renderNotice(note, true)).join('') + renderSource(entry.doc);
   } else {

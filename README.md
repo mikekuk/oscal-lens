@@ -198,20 +198,22 @@ This is an implementation inspection preview, not an SSP or component-definition
 
 ## SSP implementation status colours
 
-SSP control headers, expanded statements and component contributions show a colour and a text status label. Controls combine all recorded component contributions; selecting components on Implementation Summary recalculates the summary using only those contributions.
+Controls start collapsed. SSP control headers, expanded statements and component contributions show a colour and a text status label. Controls combine all recorded component contributions; selecting components on Implementation Summary recalculates the summary using only those contributions.
 
 | Sections in the current view | Control colour |
 | --- | --- |
-| All N/A | Grey — N/A |
-| All applicable sections inherited (N/A ignored) | Blue — Inherited |
-| All implemented, inherited or N/A, with some implemented locally | Green — Implemented |
+| All not applicable | Grey — Not applicable |
+| All applicable sections inherited (not applicable ignored) | Blue — Inherited |
+| All implemented, inherited or not applicable, with some implemented locally | Green — Implemented |
 | All applicable sections planned | Red — Planned |
 | Any partial, or planned mixed with other statuses | Amber — Partial |
-| Missing/unsupported status prevents a completed rollup | Neutral — Status not specified |
+| Alternative alone or mixed with implemented, inherited and not applicable | Purple — Alternative |
+| Locally defined status, without partial/planned or missing sections | Teal — Other (locally defined) |
+| Missing status prevents a completed rollup | Neutral — Status not specified |
 
-Statuses come from OSCAL `implementation-status.state`, with `implementation-status` properties supported at requirement/statement/component level in the OSCAL or FedRAMP namespace (or without a namespace). Native status takes precedence over properties. An explicit status supplies the default for descendants lacking their own declaration; section/contribution statuses determine the rollup rather than an aggregate parent claim. Unsupported states such as `alternative` remain unspecified and are preserved in Implementation details.
+Statuses come from OSCAL `implementation-status.state`, with `implementation-status` properties supported at requirement/statement/component level in the OSCAL or FedRAMP namespace (or without a namespace). Native status takes precedence over properties. An explicit status supplies the default for descendants lacking their own declaration; section/contribution statuses determine the rollup rather than an aggregate parent claim. All five predefined [OSCAL implementation states](https://pages.nist.gov/OSCAL-Reference/models/v1.0.4/system-security-plan/json-reference/) are supported: `implemented`, `partial`, `planned`, `alternative`, and `not-applicable`. OSCAL also permits locally defined values: these are grouped under **Other (locally defined)** with the original value retained in Implementation details. Missing or non-text status values remain unspecified. Validation still checks the original values against the document’s declared schema version. Alternative does not imply an incomplete implementation: it remains purple when mixed with completed sections. Partial/planned work takes precedence over alternative or local values; missing values prevent an alternative or locally defined rollup from implying complete coverage.
 
-Full inheritance is indicated by an explicit `inherited` state or `control-origination=inherited` property. The latter qualifies implemented contributions but never overrides partial, planned or N/A states. An inherited responsibility alone can coexist with local responsibilities, so it does not prove full inheritance. Profile mapping ancestry and component operational status do not affect these colours. This is a summary of recorded implementation sections, not a compliance or completeness assessment against every possible catalogue statement.
+Full inheritance is indicated by an explicit `inherited` state or `control-origination=inherited` property. The latter qualifies implemented contributions but never overrides partial, planned, alternative, locally defined or not-applicable states. An inherited responsibility alone can coexist with local responsibilities, so it does not prove full inheritance. Profile mapping ancestry and component operational status do not affect these colours. This is a summary of recorded implementation sections, not a compliance or completeness assessment against every possible catalogue statement.
 
 ### Filtering and Implementation Summary
 
@@ -219,4 +221,4 @@ Selecting an SSP adds an **Implementation status** filter to the Controls view. 
 
 The summary starts with all components selected and includes baseline controls without implementation records. Its component checkboxes are independent of the Controls view filters. Selecting a subset recalculates each participating control from just those components' contributions; each control is counted once. Clearing the component selection shows an empty summary. Selection is retained per SSP while moving between tabs.
 
-Use **SSP / component example** for a complete sample workspace containing an SSP, a component definition, their profile/catalogue sources and mappings. The example SSP covers all five colours plus unspecified status, with local and inherited contributions and a defined component that has no implementation. The sample component definition describes both the gateway and a shared identity provider.
+Use **SSP / component example** for a complete sample workspace containing an SSP, a component definition, their profile/catalogue sources and mappings. The example SSP covers all five predefined OSCAL statuses plus inherited and unspecified status, with local and inherited contributions and a defined component that has no implementation. The sample component definition describes both the gateway and a shared identity provider.

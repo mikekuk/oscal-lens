@@ -261,7 +261,7 @@ function renderParameter(parameter, row) {
   return `<div class="parameter-detail"><h5>${escapeHtml(parameter.id)}${label ? ' — ' + escapeHtml(label) : ''}</h5>${renderFields(fields)}<details><summary>Full parameter definition</summary>${renderFields(parameter, original, !!row.baseControl)}</details></div>`;
 }
 
-function renderControl(row, index, visibility, includeMappings = true) {
+function renderControl(row, visibility, includeMappings = true) {
   const control = row.control;
   const breadcrumb = [...row.groups.map(group => group.title), ...row.parents].join(' / ') || 'Ungrouped';
   const source = row.source ? ' · ' + escapeHtml(row.source) : '';
@@ -274,7 +274,7 @@ function renderControl(row, index, visibility, includeMappings = true) {
     'controls'
   ]), row.baseControl, !!row.baseControl) : '';
   const status = row.sspStatus ? controlStatus(row, row.selectedComponent) : null;
-  return `<details class="control${status ? ' ssp-status ssp-status-' + status : ''}" ${index === 0 ? 'open' : ''}>
+  return `<details class="control${status ? ' ssp-status ssp-status-' + status : ''}">
     <summary><span class="id">${escapeHtml(control.id)}</span><strong>${changedText(escapeHtml(control.title), !!row.baseControl && control.title !== row.baseControl.title)}</strong>${statusBadge(status)}
       <span class="crumb">${escapeHtml(breadcrumb)}${source}</span>
     </summary>
@@ -297,9 +297,8 @@ export function renderControls(type, result, problem, errorCount, selectedGroup,
     'This document has validation errors. Displayed content is for inspection only.', true) : '';
   const emptyMessage = problem ? 'Load the missing source files to see the controls.' :
     'No controls match this view.';
-  let controlIndex = 0;
   const renderRow = row => renderControl({...row, selectedComponent: byComponent ? selectedGroup : undefined,
-    componentDefinitions: result.components, sspStatus: type === 'system-security-plan'}, controlIndex++, visibility);
+    componentDefinitions: result.components, sspStatus: type === 'system-security-plan'}, visibility);
   const controls = !rows.length ? `<div class="empty">${emptyMessage}</div>` : rows.map(renderRow).join('');
   return `${type === 'system-security-plan' ? renderStatusLegend() : ''}${previewNotice}${type === 'profile' ? '<p class="profile-legend"><span class="profile-change">Dotted underline</span> = added or changed by a profile layer. Other text comes from the catalogue.</p>' : ''}${invalidNotice}<p class="odp-legend"><span class="odp odp-filled">Filled</span> explicit value · <span class="odp odp-constrained">Constrained</span> restriction or selection, not assigned · <span class="odp odp-open">Open</span> organisation-defined. Parameter details are available using the Parameters toggle.</p>${renderProcessingNotes(result, problem)}
     <div class="count"><span>${rows.length} ${rows.length === 1 ? 'control' : 'controls'} shown</span>
@@ -324,7 +323,7 @@ function statusBadge(status) {
 }
 
 function renderStatusLegend() {
-  return `<div class="ssp-status-legend" aria-label="SSP implementation status colours">${Object.keys(statusLabels).map(statusBadge).join('')}<p>Colours combine the visible implementation sections. All planned = planned; mixed planned or partial = partial. All applicable sections inherited = inherited. Implemented, inherited and N/A together = implemented.</p></div>`;
+  return `<div class="ssp-status-legend" aria-label="SSP implementation status colours">${Object.keys(statusLabels).map(statusBadge).join('')}<p>Colours combine the visible implementation sections. All planned = planned; mixed planned or partial = partial. All applicable sections inherited = inherited. Implemented, inherited and not applicable together = implemented. Alternative remains purple alongside completed sections; partial or planned work takes priority. Locally defined statuses are teal; missing statuses are neutral.</p></div>`;
 }
 
 function renderImplementation(row) {
@@ -390,7 +389,7 @@ function renderMappings(records = [], visibility) {
         if (matches.length > 1) return renderNotice('Ambiguous ' + itemLabel(item) + ': multiple matches; no control selected.', true);
         return matches.map(({row: targetRow, node}) => `<div class="mapped-item"><h5>${escapeHtml(itemLabel(item))}</h5>
           ${item.type === 'control' ? '' : '<div class="statement-flow">' + renderPartFlow(node, targetRow.parameters, {}, false, targetRow, findOriginalPart(targetRow.baseControl?.parts, node.id)) + '</div>'}
-          <p>Full control · ${escapeHtml(targetRow.control.id)}</p>${renderControl(targetRow, 0, visibility, false)}</div>`).join('');
+          <p>Full control · ${escapeHtml(targetRow.control.id)}</p>${renderControl(targetRow, visibility, false)}</div>`).join('');
       }).join('')}
       </div></details>`;
   }).join('')}</section>`;

@@ -1,17 +1,19 @@
 /** SSP presentation status only; profile mapping ancestry is not implementation inheritance. */
 export const statusLabels = {
-  implemented: 'Implemented', partial: 'Partial', planned: 'Planned',
-  'not-applicable': 'N/A', inherited: 'Inherited', unspecified: 'Status not specified'
+  implemented: 'Implemented', partial: 'Partial', planned: 'Planned', alternative: 'Alternative',
+  'not-applicable': 'Not applicable', inherited: 'Inherited',
+  other: 'Other (locally defined)', unspecified: 'Status not specified'
 };
 const namespaces = new Set([undefined, '', 'http://csrc.nist.gov/ns/oscal', 'https://fedramp.gov/ns/oscal']);
 const list = value => Array.isArray(value) ? value : [];
 const normalise = value => {
   const state = typeof value === 'string' ? value.trim().toLowerCase() : '';
   if (['n/a', 'na', 'not applicable'].includes(state)) return 'not-applicable';
-  return Object.hasOwn(statusLabels, state) ? state : 'unspecified';
+  if (!state) return 'unspecified';
+  return ['implemented', 'partial', 'planned', 'alternative', 'not-applicable', 'inherited'].includes(state) ? state : 'other';
 };
 
-/** N/A has no work remaining. Unknown states must never imply completion. */
+/** Not applicable has no work remaining. Local or missing states never imply completion. */
 export function rollupStatus(states) {
   if (!states.length) return 'unspecified';
   if (states.every(state => state === 'not-applicable')) return 'not-applicable';
@@ -20,6 +22,10 @@ export function rollupStatus(states) {
   if (applicable.every(state => state === 'implemented' || state === 'inherited')) return 'implemented';
   if (applicable.every(state => state === 'planned')) return 'planned';
   if (applicable.some(state => state === 'partial' || state === 'planned')) return 'partial';
+  if (applicable.includes('unspecified')) return 'unspecified';
+  if (applicable.includes('other')) return 'other';
+  // Keep alternative implementations visible, even when other sections are complete.
+  if (applicable.every(state => ['alternative', 'implemented', 'inherited'].includes(state))) return 'alternative';
   return 'unspecified';
 }
 

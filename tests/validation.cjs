@@ -15,11 +15,11 @@ test('all released schemas validate valid documents and reject missing required 
   const validate = makeValidator(Ajv, schemas);
   const versions = ['1.0.0','1.0.1','1.0.2','1.0.3','1.0.4','1.0.5','1.0.6','1.1.0','1.1.1','1.1.2','1.1.3','1.2.0','1.2.1','1.2.2','1.2.3'];
   assert.deepEqual(manifest.filter(x => x.type === 'catalog').map(x => x.version), versions);
-  assert.equal(manifest.length, 34);
+  assert.equal(manifest.length, 64);
   for (const item of manifest) {
     const bytes = fs.readFileSync(path.join(__dirname, '../dist', item.path));
     assert.equal(createHash('sha256').update(bytes).digest('hex'), item.sha256);
-    const doc = structuredClone(examples[item.type === 'catalog' ? 'exampleCatalog' : item.type === 'profile' ? 'exampleProfile' : 'exampleMapping']);
+    const doc = structuredClone(examples[item.type === 'catalog' ? 'exampleCatalog' : item.type === 'profile' ? 'exampleProfile' : item.type === 'system-security-plan' ? 'exampleSSP' : item.type === 'component-definition' ? 'exampleComponentDefinition' : 'exampleMapping']);
     doc[item.type].metadata['oscal-version'] = item.version;
     // Use a catalogue structure valid across releases (newer groups cannot mix
     // child groups and controls, and 1.0.5 restricts property names).

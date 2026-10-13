@@ -148,3 +148,37 @@ export const exampleMapping = {
     ]
   }
 };
+
+const gatewayId = '1b77cd32-51ee-405e-a298-163d641519a1';
+const spareId = '1b77cd32-51ee-405e-a298-163d641519a2';
+export const exampleSSP = {'system-security-plan': {
+  uuid: '1b77cd32-51ee-405e-a298-163d641519a3',
+  metadata: metadata('Example system security plan'),
+  'import-profile': {href: 'example-profile.json'},
+  'system-characteristics': {
+    'system-ids': [{id: 'example-system'}], 'system-name': 'Example service',
+    description: 'Illustrative system for component browsing.',
+    'security-sensitivity-level': 'low',
+    'security-impact-level': {'security-objective-confidentiality': 'low', 'security-objective-integrity': 'low', 'security-objective-availability': 'low'},
+    'system-information': {'information-types': [{title: 'Administrative information', description: 'Example service records.',
+      'confidentiality-impact': {base: 'low'}, 'integrity-impact': {base: 'low'}, 'availability-impact': {base: 'low'}}]},
+    status: {state: 'operational'}, 'authorization-boundary': {description: 'Example service boundary.'}
+  },
+  'system-implementation': {users: [{uuid: '1b77cd32-51ee-405e-a298-163d641519a9', 'authorized-privileges': [{title: 'Administrator', 'functions-performed': ['Administer service']}]}], components: [
+    {uuid: gatewayId, type: 'software', title: 'Access gateway', description: 'Controls access to the service.', status: {state: 'operational'}},
+    {uuid: spareId, type: 'software', title: 'Reporting service', description: 'Defined component with no implementation recorded.', status: {state: 'under-development'}}
+  ]},
+  'control-implementation': {description: 'Example control implementation.', 'implemented-requirements': [{
+    uuid: '1b77cd32-51ee-405e-a298-163d641519a4', 'control-id': 'ac-1',
+    'by-components': [{uuid: '1b77cd32-51ee-405e-a298-163d641519a5', 'component-uuid': gatewayId, description: 'The gateway enforces the approved access policy.'}],
+    statements: [{'statement-id': 'ac-1_smt', uuid: '1b77cd32-51ee-405e-a298-163d641519a6',
+      'by-components': [{uuid: '1b77cd32-51ee-405e-a298-163d641519a7', 'component-uuid': gatewayId, description: 'Gateway policy review follows the inherited profile frequency.'}]}]
+  }]}
+}};
+export const exampleComponentDefinition = {'component-definition': {
+  uuid: '1b77cd32-51ee-405e-a298-163d641519a8', metadata: metadata('Example component definition'),
+  components: [{uuid: gatewayId, type: 'software', title: 'Access gateway', description: 'Reusable access service.',
+    'control-implementations': [{uuid: '2b77cd32-51ee-405e-a298-163d641519a1', source: 'example-profile.json', description: 'Implementation against the example profile.',
+      'implemented-requirements': [{uuid: '2b77cd32-51ee-405e-a298-163d641519a2', 'control-id': 'ac-1', description: 'Provides configurable access policy enforcement.'}]}]
+  }]
+}};

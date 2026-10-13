@@ -13,9 +13,9 @@ export function createGraphState() {
  * mappings) are previewed. Unselected catalogues never enter graph construction. */
 export function prepareGraph(documents, getPreview, validate, selection) {
   const selected = documents.filter(entry => selection.resources.has(documentPath(entry)) &&
-    ['catalog', 'profile'].includes(model(entry.doc).type));
+    ['catalog', 'profile', 'system-security-plan', 'component-definition'].includes(model(entry.doc).type));
   const needed = new Set(selected.map(entry => entry.doc));
-  for (const entry of selected.filter(entry => entry.doc.profile)) {
+  for (const entry of selected.filter(entry => !entry.doc.catalog)) {
     try {
       for (const row of getPreview(entry).rows) for (const origin of row.lineage || []) needed.add(origin.doc);
     } catch { /* The graph displays the profile's resolution error. */ }
@@ -32,7 +32,7 @@ export function prepareGraph(documents, getPreview, validate, selection) {
  * graph data or run a layout. Changes remain drafts until the user presses OK. */
 export function mountGraphSettings(panel, documents, getPreview, validate, state,
   loadRenderer = () => import('./graph-view.mjs')) {
-  const resources = documents.filter(entry => ['catalog', 'profile'].includes(model(entry.doc).type))
+  const resources = documents.filter(entry => ['catalog', 'profile', 'system-security-plan', 'component-definition'].includes(model(entry.doc).type))
     .map(entry => ({id: documentPath(entry), title: model(entry.doc).body.metadata?.title || entry.name, type: model(entry.doc).type}));
   const files = documents.filter(entry => entry.doc['mapping-collection']).map(documentPath);
   const relationships = [...new Set(documents.flatMap(entry => (entry.doc['mapping-collection']?.mappings || [])
@@ -47,9 +47,9 @@ export function mountGraphSettings(panel, documents, getPreview, validate, state
       ${kind === 'resources' ? `<span class="graph-swatch" style="background:${state.colours.get(id)}"></span>` : ''}${esc(label(item))}</label>`;
   }).join('');
   panel.innerHTML = `<section class="graph-settings">
-    <p>Select catalogues or profiles, mapping files and relationships, then press <strong>OK</strong> to build the graph. These filters are independent of the control sidebar.</p>
+    <p>Select catalogues, profiles, SSPs or component definitions, mapping files and relationships, then press <strong>OK</strong> to build the graph. These filters are independent of the control sidebar.</p>
     <div class="graph-filters">
-      <details open><summary>Catalogues / profiles</summary>${options(resources, 'resources', id => state.selectedResources.has(id), r => `${r.title} (${r.type})`)}</details>
+      <details open><summary>Control documents</summary>${options(resources, 'resources', id => state.selectedResources.has(id), r => `${r.title} (${r.type})`)}</details>
       <details><summary>Mapping files</summary>${options(files, 'files', id => !state.hiddenFiles.has(id)) || '<p>No mapping files loaded.</p>'}</details>
       <details><summary>Relationships</summary>${options(relationships, 'relationships', id => !state.hiddenRelationships.has(id)) || '<p>No relationships loaded.</p>'}</details>
     </div>
@@ -77,7 +77,7 @@ export function mountGraphSettings(panel, documents, getPreview, validate, state
       relationships: new Set(relationships.filter(id => !state.hiddenRelationships.has(id)))};
     if (!selection.resources.size) {
       disposeRenderer?.(); disposeRenderer = undefined; result.innerHTML = '';
-      status.textContent = 'No catalogues or profiles selected. Select at least one and press OK.';
+      status.textContent = 'No control documents selected. Select at least one and press OK.';
       return;
     }
     button.disabled = true; status.textContent = 'Building selected graph…';

@@ -13,7 +13,9 @@ import {
   exampleCatalog,
   exampleProfile,
   exampleMappedCatalog,
-  exampleMapping
+  exampleMapping,
+  exampleSSP,
+  exampleComponentDefinition
 } from './examples.mjs';
 import {
   escapeHtml,
@@ -21,6 +23,7 @@ import {
   renderDocuments,
   renderHeading,
   renderGroups,
+  renderComponentDetails,
   renderValidation,
   renderSource,
   renderGreyMatter,
@@ -112,6 +115,8 @@ function renderWorkspace() {
   const errorCount = issues.filter(issue => issue.severity === 'error').length;
   select('#heading').innerHTML = renderHeading(entry, type, body, result, issues);
   select('#issue-count').textContent = issues.length ? `(${issues.length})` : '';
+  select('#group-label').textContent = result.components ? 'COMPONENTS' : 'GROUPS';
+  select('#groups').setAttribute('aria-label', result.components ? 'Components' : 'Catalogue groups');
   select('#groups').innerHTML = renderGroups(type === 'catalog' ? [body] : result.sources, result, group);
 
   select('#section-options').innerHTML = renderSectionOptions(result.rows, sectionVisibility);
@@ -123,7 +128,7 @@ function renderWorkspace() {
     panel.innerHTML = renderSource(entry.doc);
   } else if (tab === 'matter') {
     const roots = type === 'catalog' ? [body] : [body, ...result.sources];
-    panel.innerHTML = renderGreyMatter(roots, group, problem);
+    panel.innerHTML = renderComponentDetails(result, group) + renderGreyMatter(roots, result.components ? '' : group, problem);
   } else if (type === 'mapping-collection') {
     panel.innerHTML = renderNotice('Mappings are added automatically when you select a referenced catalogue or profile.') + result.notes.map(note => renderNotice(note, true)).join('') + renderSource(entry.doc);
   } else {
@@ -150,7 +155,7 @@ function render() {
   }
 }
 
-function loadDemo() {
+function loadDemo(implementations = false) {
   previewCache = new WeakMap();
   mappingCache = undefined;
   documents = [{
@@ -161,7 +166,10 @@ function loadDemo() {
     doc: structuredClone(exampleCatalog)
   }, {name: 'example-assurance.json', doc: structuredClone(exampleMappedCatalog)},
   {name: 'example-mapping.json', doc: structuredClone(exampleMapping)}];
-  currentDocumentIndex = 0;
+  if (implementations === true) documents.push(
+    {name: 'example-ssp.json', doc: structuredClone(exampleSSP)},
+    {name: 'example-component.json', doc: structuredClone(exampleComponentDefinition)});
+  currentDocumentIndex = implementations === true ? 4 : 0;
   group = '';
   select('#search').value = '';
   notice('Example workspace loaded. These documents are illustrative, not an official baseline.');
@@ -195,7 +203,8 @@ select('#section-options').onchange = event => {
     .dataset.section === input.dataset.section);
   replacement?.focus();
 };
-select('#demo').onclick = loadDemo;
+select('#demo').onclick = () => loadDemo();
+select('#implementation-demo').onclick = () => loadDemo(true);
 select('#all-groups').onclick = () => {
   group = '';
   render()
@@ -261,6 +270,7 @@ async function openDocuments(event, folder = false) {
   select('#files').disabled = true;
   select('#folder').disabled = true;
   select('#demo').disabled = true;
+  select('#implementation-demo').disabled = true;
   notice('Reading local documents…');
   try {
     const previous = documents[currentDocumentIndex]?.doc;
@@ -316,5 +326,6 @@ try {
   notice('Could not start validation: ' + event.message, true);
   select('#files').disabled = true;
   select('#folder').disabled = true;
-  select('#demo').disabled = true
+  select('#demo').disabled = true;
+  select('#implementation-demo').disabled = true
 }

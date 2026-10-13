@@ -27,7 +27,7 @@ Open http://localhost:3000. Run `npm test` for the schema-validation and profile
 3. Select a JSON `*_profile.json` document in the workspace, for example `NIST_SP-800-53_rev5_LOW-baseline_profile.json`. No pre-resolution step is needed to view its selected controls.
 4. The viewer follows JSON catalogue/profile imports and preserves source groups and grey matter. It reports missing files or unsupported operations explicitly.
 
-The NIST Rev. 5 LOW unresolved profile was checked against its full source catalogue: all 149 listed controls were selected across 18 groups. This verifies that baseline's imports and selection, not general resolver conformance. Mapping collections are also loaded; JSON files for other OSCAL models and non-JSON files are skipped during folder loading. Invalid JSON is reported. Current NIST documents still carry the version warning described below.
+The NIST Rev. 5 LOW unresolved profile was checked against its full source catalogue: all 149 listed controls were selected across 18 groups. This verifies that baseline's imports and selection, not general resolver conformance. Mapping collections, SSPs and component definitions are also loaded; JSON files for other OSCAL models and non-JSON files are skipped during folder loading. Invalid JSON is reported. Current NIST documents still carry the version warning described below.
 
 ## Validation scope
 
@@ -35,7 +35,7 @@ Bundled, unmodified NIST JSON Schemas are selected using each document's `metada
 
 | Model | Bundled OSCAL versions |
 | --- | --- |
-| Catalogue and profile | 1.0.0–1.0.6, 1.1.0–1.1.3, 1.2.0–1.2.3 |
+| Catalogue, profile, SSP and component definition | 1.0.0–1.0.6, 1.1.0–1.1.3, 1.2.0–1.2.3 |
 | Mapping collection | 1.2.0–1.2.3 |
 
 NIST marks 1.0.5 as a pre-release; it is included for documents declaring that version. Its published schema has known overly restrictive property-name constraints, corrected upstream in 1.0.6. The exact schema for the declared release is used, including its original constraints and upstream limitations. Missing or malformed version declarations produce an error. Unbundled versions produce a **Schema not checked** notice; another release is never silently substituted. Future releases require adding their official schema assets and entries to `dist/schemas/manifest.json`.
@@ -182,3 +182,16 @@ server or runtime package installation is needed. Layout uses the built-in CoSE
 algorithm; very large all-control graphs may take time to rearrange. Filter the
 network before expanding many statement nodes. Positions and filters last for
 this browser session and do not modify uploaded OSCAL files.
+
+## SSP and component definition views
+
+Open `system-security-plan` and `component-definition` JSON files alongside their profiles, catalogues and mapping collections. **SSP / component example** loads a demonstration workspace.
+
+- The component sidebar works like the catalogue group sidebar. It includes every declared component, even those with no implementation, and labels undefined component references. Counts show the controls with recorded contributions for each component.
+- SSPs follow `import-profile`, retaining the selected baseline controls and profile tailoring. Requirement-level and statement-level `by-components` associate implementation narratives with components. Selecting a component filters both controls and contributions. Controls without implementations remain available under **Show all**.
+- Component definitions follow each `control-implementations.source` to a loaded profile or catalogue. Recursive `import-component-definitions`, capability contributions and `incorporates-components` references are included. Missing sources, import cycles, duplicate definitions and ambiguous controls produce notices; original narratives remain inspectable.
+- Mappings inherit through the exact source profile/catalogue ancestry, including nested profiles. Matching control IDs in unrelated documents do not inherit mappings. SSPs and component definitions can also be selected in the mapping graph. Inherited mappings describe source requirements, not an assessment of implementation equivalence or compliance.
+- SSP-wide and requirement-level parameter assignments override inherited values in their scope. Component and statement assignments apply within their narrative; component-definition assignments do not change shared profile requirement text.
+- **Grey matter**, **Validation** and **Source** retain supporting document content and original JSON. Validation uses the exact bundled NIST schema for the declared version.
+
+This is an implementation inspection preview, not an SSP or component-definition resolver. It does not merge SSP components with separately loaded definitions by UUID, infer implementation from inventory alone, reconcile duplicate imported component definitions, or assess satisfaction of controls. Implementation metadata (including status, responsibilities, provided/inherited responsibilities and inventory) remains available in details and source views. If multiple component-definition sources contain the same control ID, graph endpoints remain subject to the existing ambiguity checks.

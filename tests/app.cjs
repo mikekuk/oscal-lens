@@ -6,7 +6,7 @@ const path=require('node:path');
 test('workspace deletion refreshes profiles, mappings, selection and empty state',async()=>{
   const elements=new Map();
   const element=selector=>{
-    if(!elements.has(selector)) elements.set(selector,{innerHTML:'',textContent:'',value:'',disabled:false,focus(){this.focused=true;},querySelectorAll:()=>[]});
+    if(!elements.has(selector)) elements.set(selector,{innerHTML:'',textContent:'',value:'',disabled:false,setAttribute(){},focus(){this.focused=true;},querySelectorAll:()=>[]});
     return elements.get(selector);
   };
   global.document={querySelector:element,querySelectorAll:()=>[]};
@@ -87,6 +87,25 @@ test('workspace deletion refreshes profiles, mappings, selection and empty state
     assert.doesNotMatch(element('#documents').innerHTML,/ disabled/);
     remove(4);
     assert.equal(element('#doc-count').textContent,'4 files');
+
+    element('#implementation-demo').onclick();
+    assert.equal(element('#doc-count').textContent,'6 files');
+    assert.equal(element('#group-label').textContent,'COMPONENTS');
+    assert.match(element('#heading').innerHTML,/SYSTEM SECURITY PLAN/);
+    assert.match(element('#heading').innerHTML,/Schema checks passed/);
+    assert.match(element('#panel').innerHTML,/The gateway enforces/);
+    assert.match(element('#panel').innerHTML,/Mappings \(2\)/);
+    element('#groups').onclick({target:{closest:()=>({dataset:{group:'1b77cd32-51ee-405e-a298-163d641519a2'}})}});
+    assert.match(element('#panel').innerHTML,/No controls match/);
+    element('#all-groups').onclick();
+    choose(5);
+    assert.match(element('#heading').innerHTML,/COMPONENT DEFINITION/);
+    assert.match(element('#heading').innerHTML,/Schema checks passed/);
+    assert.match(element('#panel').innerHTML,/Provides configurable access/);
+    remove(0);
+    assert.match(element('#panel').innerHTML,/Missing JSON import/);
+    assert.match(element('#panel').innerHTML,/Provides configurable access/);
+    assert.doesNotMatch(element('#panel').innerHTML,/Mappings \(2\)/);
 
   } finally {delete global.document;delete global.window;delete global.fetch;}
 });

@@ -164,13 +164,19 @@ export function renderHeading(entry, type, body, result, issues) {
   const status = errorCount ? `${errorCount} validation errors` : issues.some(issue => issue.code === 'schema-unavailable') ? 'Schema not checked' : issues.length ? 'Validation notice' :
     'Schema checks passed';
   return `<div>
-    <p class="eyebrow">${type === 'profile' ? 'PROFILE SELECTION PREVIEW' : type === 'mapping-collection' ? 'MAPPING COLLECTION' : isResolvedProfile(body) ? 'RESOLVED PROFILE · CATALOGUE' : 'CATALOGUE'}</p>
+    <p class="eyebrow">${type === 'system-security-plan' ? 'SYSTEM SECURITY PLAN' : type === 'component-definition' ? 'COMPONENT DEFINITION' : type === 'profile' ? 'PROFILE SELECTION PREVIEW' : type === 'mapping-collection' ? 'MAPPING COLLECTION' : isResolvedProfile(body) ? 'RESOLVED PROFILE · CATALOGUE' : 'CATALOGUE'}</p>
     <h2>${escapeHtml(body.metadata?.title || entry.name)}</h2>
-    <p>${result.rows.length} controls · ${groupCount} groups · OSCAL ${escapeHtml(body.metadata?.['oscal-version'] || 'unknown')}</p>
+    <p>${result.rows.length} ${result.rows.length === 1 ? 'control' : 'controls'} · ${result.components ? result.components.length + (result.components.length === 1 ? ' component' : ' components') : groupCount + ' groups'} · OSCAL ${escapeHtml(body.metadata?.['oscal-version'] || 'unknown')}</p>
   </div><span class="badge ${issues.length ? 'warn' : ''}">${status}</span>`;
 }
 
 export function renderGroups(sources, result, selectedGroup) {
+  if (result.components) return result.components.map(component => {
+    const count = result.rows.filter(row => row.componentIds?.includes(component.id)).length;
+    return `<button class="group ${selectedGroup === component.id ? 'active' : ''}" data-group="${escapeHtml(component.id)}">
+      ${escapeHtml(component.title)} <small>(${count}) · ${component.defined ? 'Defined' : 'Undefined'}${component.implemented ? ' · Implemented' : ''}</small>
+    </button>`;
+  }).join('') || '<p class="side-foot">No components</p>';
   const groups = new Map();
   for (const source of sources) {
     for (const group of allGroups(source)) groups.set(group.id || group.title, group);
@@ -270,30 +276,69 @@ function renderControl(row, index, visibility, includeMappings = true) {
     <summary><span class="id">${escapeHtml(control.id)}</span><strong>${changedText(escapeHtml(control.title), !!row.baseControl && control.title !== row.baseControl.title)}</strong>
       <span class="crumb">${escapeHtml(breadcrumb)}${source}</span>
     </summary>
-    <div class="detail">${renderParts(control.parts, row.parameters, visibility, row)}${parameters}${metadata}${renderProfileChanges(row)}${includeMappings && visibility.mappings !== false ? renderMappings(row.mappings, visibility) : ''}</div>
+    <div class="detail">${renderImplementation(row)}${renderParts(control.parts, row.parameters, visibility, row)}${parameters}${metadata}${renderProfileChanges(row)}${includeMappings && visibility.mappings !== false ? renderMappings(row.mappings, visibility) : ''}</div>
   </details>`;
 }
 
 export function renderControls(type, result, problem, errorCount, selectedGroup, query, visibility = {}) {
   const rows = result.rows.filter(row => {
-    const inGroup = !selectedGroup || row.groups.some(group => (group.id || group.title) ===
-      selectedGroup);
-    return inGroup && substituteParameters(JSON.stringify(row.control), row.parameters).toLowerCase()
+    const inGroup = !selectedGroup || (result.components ? row.componentIds?.includes(selectedGroup) : row.groups.some(group => (group.id || group.title) === selectedGroup));
+    return inGroup && substituteParameters(JSON.stringify([row.control, row.implementations, result.components?.filter(component => row.componentIds?.includes(component.id))]), row.parameters).toLowerCase()
       .includes(query);
   });
   const previewNotice = type === 'profile' ? renderNotice(
     'Selection preview: selected controls and effective parameter definitions are shown within source groups. This is not a fully resolved OSCAL catalogue.'
-  ) : '';
+  ) : result.components ? renderNotice('Implementation preview: requirements and mappings are inherited from loaded catalogues and profile previews. Implementation narratives are shown separately.') : '';
   const invalidNotice = errorCount ? renderNotice(
     'This document has validation errors. Displayed content is for inspection only.', true) : '';
-  const emptyMessage = problem ? 'Load the missing source files to see the profile’s controls.' :
+  const emptyMessage = problem ? 'Load the missing source files to see the controls.' :
     'No controls match this view.';
-  const controls = rows.length ? rows.map((row, index) => renderControl(row, index, visibility)).join('') :
+  const controls = rows.length ? rows.map((row, index) => renderControl({...row, selectedComponent: result.components ? selectedGroup : undefined, componentDefinitions: result.components}, index, visibility)).join('') :
     `<div class="empty">${emptyMessage}</div>`;
   return `${previewNotice}${type === 'profile' ? '<p class="profile-legend"><span class="profile-change">Dotted underline</span> = added or changed by a profile layer. Other text comes from the catalogue.</p>' : ''}${invalidNotice}<p class="odp-legend"><span class="odp odp-filled">Filled</span> explicit value · <span class="odp odp-constrained">Constrained</span> restriction or selection, not assigned · <span class="odp odp-open">Open</span> organisation-defined. Parameter details are available using the Parameters toggle.</p>${renderProcessingNotes(result, problem)}
     <div class="count"><span>${rows.length} ${rows.length === 1 ? 'control' : 'controls'} shown</span>
-      <span>${selectedGroup ? 'Filtered by group' : 'All groups'}</span>
-    </div>${controls}`;
+      <span>${result.components ? (selectedGroup ? 'Filtered by component' : 'All components') : (selectedGroup ? 'Filtered by group' : 'All groups')}</span>
+    </div>${renderComponentDetails(result, selectedGroup)}${controls}`;
+}
+
+
+export function renderComponentDetails(result, selected = '') {
+  if (!result.components) return '';
+  return result.components.filter(component => !selected || component.id === selected).map(component =>
+    `<details class="matter-block"${selected ? ' open' : ''}><summary>${escapeHtml(component.title)} · ${component.defined ? 'Defined component' : 'Undefined component'}${component.implemented ? ' · Implementation recorded' : ' · No implementation recorded'}</summary>${renderFields(omitFields(component.body, ['control-implementations']))}</details>`
+  ).join('');
+}
+
+function renderImplementation(row) {
+  if (!row.implementations) return '';
+  const records = row.implementations.filter(item => !row.selectedComponent || item.componentIds.includes(row.selectedComponent));
+  if (!records.length) return renderNotice('No implementation recorded for this control.');
+  return `<section class="control-section"><h4>Implementation</h4>${records.map(item => {
+    let body = item.body;
+    if (row.selectedComponent) {
+      const keep = values => (values || []).filter(value => value['component-uuid'] === row.selectedComponent);
+      body = {...body};
+      if (body['by-components']) body['by-components'] = keep(body['by-components']);
+      if (body.statements) body.statements = body.statements.filter(statement => !statement['by-components'] || keep(statement['by-components']).length).map(statement => statement['by-components'] ? {...statement, 'by-components': keep(statement['by-components'])} : statement);
+    }
+    const names = item.componentIds.filter(id => !row.selectedComponent || id === row.selectedComponent).map(id => row.componentDefinitions?.find(component => component.id === id)?.title || id);
+    const scope = (parent, settings = []) => {
+      const result = {...parent};
+      for (const setting of settings) result[setting['param-id']] = {...result[setting['param-id']], ...setting};
+      return result;
+    };
+    const parameters = scope(scope(row.parameters, item.settings), body['set-parameters']);
+    const narrative = (value, parent) => {
+      const local = scope(parent, value['set-parameters']);
+      return (value.description ? `<p>${renderProse(value.description, local)}</p>` : '') +
+        (value['by-components'] || []).map(contribution => {
+          const name = row.componentDefinitions?.find(component => component.id === contribution['component-uuid'])?.title || contribution['component-uuid'];
+          return `<div class="part"><strong>${escapeHtml(name)}</strong>${narrative(contribution, local)}</div>`;
+        }).join('');
+    };
+    const statements = (body.statements || []).map(statement => `<div class="part"><strong>Statement ${escapeHtml(statement['statement-id'])}</strong>${narrative(statement, parameters)}</div>`).join('');
+    return `<div class="matter-block"><h5>${escapeHtml(names.join(' / ') || 'System-wide implementation')}</h5>${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}${narrative(body, parameters)}${statements}<details><summary>Implementation details</summary>${renderFields({...(item.title ? {title: item.title} : {}), ...(item.source ? {source: item.source} : {}), ...(item.settings ? {'implementation-set-parameters': item.settings} : {}), ...body})}</details></div>`;
+  }).join('')}</section>`;
 }
 
 function renderProfileChanges(row) {

@@ -236,5 +236,215 @@
     "path": "schemas/1.2.3/oscal_profile_schema.json",
     "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.3/oscal_profile_schema.json",
     "sha256": "7c5ff5a92683b6a80ce6a3474dea04e0ea8680a4ecb60702ffa08ebfc677e6cb"
+  },
+  {
+    "type": "system-security-plan",
+    "version": "1.0.0",
+    "path": "schemas/1.0.0/oscal_ssp_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.0/oscal_ssp_schema.json",
+    "sha256": "4420b5198dae8f6c1d76012ffceb04d0b7410a63bfdbb02176131a354dfd8735"
+  },
+  {
+    "type": "component-definition",
+    "version": "1.0.0",
+    "path": "schemas/1.0.0/oscal_component_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.0/oscal_component_schema.json",
+    "sha256": "c54c6150c8caf00379132f32399d71f60d2cd3dafd76132b9a180e1c5bcaf205"
+  },
+  {
+    "type": "system-security-plan",
+    "version": "1.0.1",
+    "path": "schemas/1.0.1/oscal_ssp_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.1/oscal_ssp_schema.json",
+    "sha256": "4420b5198dae8f6c1d76012ffceb04d0b7410a63bfdbb02176131a354dfd8735"
+  },
+  {
+    "type": "component-definition",
+    "version": "1.0.1",
+    "path": "schemas/1.0.1/oscal_component_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.1/oscal_component_schema.json",
+    "sha256": "c54c6150c8caf00379132f32399d71f60d2cd3dafd76132b9a180e1c5bcaf205"
+  },
+  {
+    "type": "system-security-plan",
+    "version": "1.0.2",
+    "path": "schemas/1.0.2/oscal_ssp_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.2/oscal_ssp_schema.json",
+    "sha256": "64f0d8177d52534d2726f85ccdbff00335d286359931013bf3cfae4cb1e21d45"
+  },
+  {
+    "type": "component-definition",
+    "version": "1.0.2",
+    "path": "schemas/1.0.2/oscal_component_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.2/oscal_component_schema.json",
+    "sha256": "2d7641996ce3d2303168cbd313a42a0b6c1ba1de1ffa099e10e7b0b96bb5662e"
+  },
+  {
+    "type": "system-security-plan",
+    "version": "1.0.3",
+    "path": "schemas/1.0.3/oscal_ssp_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.3/oscal_ssp_schema.json",
+    "sha256": "dc8edb1066db61e7d54630da34e08d2cfefdc1e466559ecd2f6ba085d281a962"
+  },
+  {
+    "type": "component-definition",
+    "version": "1.0.3",
+    "path": "schemas/1.0.3/oscal_component_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.3/oscal_component_schema.json",
+    "sha256": "c5229110b9f645be414f0efa8cac761c0c21b930205339c9f03b2b7f24385675"
+  },
+  {
+    "type": "system-security-plan",
+    "version": "1.0.4",
+    "path": "schemas/1.0.4/oscal_ssp_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.4/oscal_ssp_schema.json",
+    "sha256": "5c54cdce8c703617fc7a8069efc63082abb7c7b8b7d7c8690954c1f7c5975fa4"
+  },
+  {
+    "type": "component-definition",
+    "version": "1.0.4",
+    "path": "schemas/1.0.4/oscal_component_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.4/oscal_component_schema.json",
+    "sha256": "55c57a34adb70319e691cdce3caa657dbbf84f54e5721928ef12b0ceb02ffad6"
+  },
+  {
+    "type": "system-security-plan",
+    "version": "1.0.5",
+    "path": "schemas/1.0.5/oscal_ssp_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.5/oscal_ssp_schema.json",
+    "sha256": "8ff52951ba385d9d19106a44c65415038648353e855d8fe8674b6767fac4efb5"
+  },
+  {
+    "type": "component-definition",
+    "version": "1.0.5",
+    "path": "schemas/1.0.5/oscal_component_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.5/oscal_component_schema.json",
+    "sha256": "9763f62684a30d4b986b342b6597368b62f4a2690e1325162f673992a119b63c"
+  },
+  {
+    "type": "system-security-plan",
+    "version": "1.0.6",
+    "path": "schemas/1.0.6/oscal_ssp_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.6/oscal_ssp_schema.json",
+    "sha256": "685260f77de450af27535d852cb80113ca8e545e43214f33c3702e3ccd704f6b"
+  },
+  {
+    "type": "component-definition",
+    "version": "1.0.6",
+    "path": "schemas/1.0.6/oscal_component_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.0.6/oscal_component_schema.json",
+    "sha256": "be2e0e2369598d98f824a44eaaa449f30d50aa065d89710cd5089920c0d0a31f"
+  },
+  {
+    "type": "system-security-plan",
+    "version": "1.1.0",
+    "path": "schemas/1.1.0/oscal_ssp_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.0/oscal_ssp_schema.json",
+    "sha256": "c361dd9aadb7e0cf9b195194f2e1e88829d2b2b183d0e3ac32d4590d1acb72dd"
+  },
+  {
+    "type": "component-definition",
+    "version": "1.1.0",
+    "path": "schemas/1.1.0/oscal_component_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.0/oscal_component_schema.json",
+    "sha256": "41c14d6a7d6798a7cc3b87d07bf2888b2027210acd79d27f10b6579610f3afd2"
+  },
+  {
+    "type": "system-security-plan",
+    "version": "1.1.1",
+    "path": "schemas/1.1.1/oscal_ssp_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.1/oscal_ssp_schema.json",
+    "sha256": "38cdf08b38ae070083d007e6dba645c4a1099b5e8eb8afe933f35f2e448e6680"
+  },
+  {
+    "type": "component-definition",
+    "version": "1.1.1",
+    "path": "schemas/1.1.1/oscal_component_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.1/oscal_component_schema.json",
+    "sha256": "55f89faeb3b7703962ba66d3662f62d8e0b521844d96a0a871e159865a282c6a"
+  },
+  {
+    "type": "system-security-plan",
+    "version": "1.1.2",
+    "path": "schemas/1.1.2/oscal_ssp_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.2/oscal_ssp_schema.json",
+    "sha256": "08d3faeb12f0fab7705dec15fb648c72400c7ab6ac0056222d49d21507e02a69"
+  },
+  {
+    "type": "component-definition",
+    "version": "1.1.2",
+    "path": "schemas/1.1.2/oscal_component_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.2/oscal_component_schema.json",
+    "sha256": "7b74710940ad39b6b63d4ddccbadf2c7d2e9bf11b07808d41d2aa27a4616e5ce"
+  },
+  {
+    "type": "system-security-plan",
+    "version": "1.1.3",
+    "path": "schemas/1.1.3/oscal_ssp_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.3/oscal_ssp_schema.json",
+    "sha256": "da5f452b9e7bdf85246b79ed32475cd419321eb600e6928439ae67aef5a63e53"
+  },
+  {
+    "type": "component-definition",
+    "version": "1.1.3",
+    "path": "schemas/1.1.3/oscal_component_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.1.3/oscal_component_schema.json",
+    "sha256": "9bde069f8f65ec82ea626348cc40ae5d42b0f74c1a2a8b9289a1604bf521a15c"
+  },
+  {
+    "type": "system-security-plan",
+    "version": "1.2.0",
+    "path": "schemas/1.2.0/oscal_ssp_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.0/oscal_ssp_schema.json",
+    "sha256": "a51c8529a10540de1b018f3e12f23b619a8bb4fae8006229578b5a0f711be863"
+  },
+  {
+    "type": "component-definition",
+    "version": "1.2.0",
+    "path": "schemas/1.2.0/oscal_component_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.0/oscal_component_schema.json",
+    "sha256": "225e770ba71081c48a7052ae40a8ed948db5a752cf03a8071e2d4a6cf411d1b1"
+  },
+  {
+    "type": "system-security-plan",
+    "version": "1.2.1",
+    "path": "schemas/1.2.1/oscal_ssp_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.1/oscal_ssp_schema.json",
+    "sha256": "3027ffb23ba94a8ca4e43ce9417cf2b02f27b7c36d8a4ead8fe2905483c6d10a"
+  },
+  {
+    "type": "component-definition",
+    "version": "1.2.1",
+    "path": "schemas/1.2.1/oscal_component_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.1/oscal_component_schema.json",
+    "sha256": "ce95b3b3ea8de87c020ad4a91075241f6f863a77afe212ee828009830d6042d1"
+  },
+  {
+    "type": "system-security-plan",
+    "version": "1.2.2",
+    "path": "schemas/1.2.2/oscal_ssp_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.2/oscal_ssp_schema.json",
+    "sha256": "d7f9bf67101829083472a8f058a5b5ef078e09b3f699ac0c4dbe33a5b0671b6a"
+  },
+  {
+    "type": "component-definition",
+    "version": "1.2.2",
+    "path": "schemas/1.2.2/oscal_component_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.2/oscal_component_schema.json",
+    "sha256": "3b6e0765c44037c4d1bfb2cdb972713917d3eca73e566c0e6c6881a565638830"
+  },
+  {
+    "type": "system-security-plan",
+    "version": "1.2.3",
+    "path": "schemas/1.2.3/oscal_ssp_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.3/oscal_ssp_schema.json",
+    "sha256": "99b1bee2df5604a7d4f1faeab43148e0bd4c4a1f513cd0d2d0c7896aa216a1e7"
+  },
+  {
+    "type": "component-definition",
+    "version": "1.2.3",
+    "path": "schemas/1.2.3/oscal_component_schema.json",
+    "source": "https://github.com/usnistgov/OSCAL/releases/download/v1.2.3/oscal_component_schema.json",
+    "sha256": "95e76881151ececd5cb1a93ff0f70ad74b8cc1aa58771626ac8b262bf2c8e001"
   }
 ]

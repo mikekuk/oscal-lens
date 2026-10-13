@@ -28,7 +28,7 @@ SOFTWARE.
 
 ## NIST OSCAL schemas
 
-Unmodified NIST OSCAL catalogue/profile JSON Schemas for 1.0.0–1.0.6,
+Unmodified NIST OSCAL catalogue/profile/SSP/component-definition JSON Schemas for 1.0.0–1.0.6,
 1.1.0–1.1.3 and 1.2.0–1.2.3, and mapping JSON Schemas for 1.2.0–1.2.3,
 authored by the US National Institute of Standards and Technology.
 NIST marks 1.0.5 as a pre-release.

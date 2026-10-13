@@ -1,3 +1,4 @@
+import { implementationPreview, implementationTypes } from './implementations.mjs';
 import {
   applyAlterations
 } from './alterations.mjs';
@@ -12,8 +13,8 @@ import {
 export function model(doc) {
   if (!doc || typeof doc !== 'object' || Array.isArray(doc)) throw Error(
     'Expected an OSCAL JSON object.');
-  const types = ['catalog', 'profile', 'mapping-collection'].filter(k => doc[k]);
-  if (types.length !== 1) throw Error('Provide exactly one catalog, profile or mapping-collection root.');
+  const types = ['catalog', 'profile', 'mapping-collection', ...implementationTypes].filter(k => doc[k]);
+  if (types.length !== 1) throw Error('Provide exactly one supported OSCAL root (catalog, profile, mapping-collection, system-security-plan or component-definition).');
   if (typeof doc[types[0]] !== 'object' || Array.isArray(doc[types[0]])) throw Error(
     'OSCAL root must be an object.');
   return {
@@ -77,7 +78,7 @@ export function makeValidator(Ajv, schemas) {
   // Release keys come from the manifest, not $id: some NIST releases
   // retain an earlier release's $id in their published schemas.
   for (const [key, schema] of Object.entries(schemas)) {
-    if (!/^(catalog|profile|mapping-collection)@1\.\d+\.\d+$/.test(key)) {
+    if (!/^(catalog|profile|mapping-collection|system-security-plan|component-definition)@1\.\d+\.\d+$/.test(key)) {
       throw Error(`Invalid bundled schema key: ${key}`);
     }
     available.set(key, schema);
@@ -130,7 +131,7 @@ export function makeValidator(Ajv, schemas) {
             const item = v[i];
             const id = item?.id || item?.uuid;
             if (id && ['controls', 'groups', 'params', 'parts', 'resources', 'parties', 'roles',
-                'locations'
+                'locations', 'components'
               ].includes(k)) {
               const key = k + ':' + id;
               if (seen.has(key)) issues.push({
@@ -185,6 +186,7 @@ export function preview(doc, documents, trail = []) {
   };
   if (type === 'mapping-collection') return { rows: [], sources: [], notes: [] };
   if (trail.includes(doc)) throw Error('Circular profile import detected.');
+  if (implementationTypes.includes(type)) return implementationPreview(doc, documents, trail, preview, model);
   const rows = [],
     sources = [],
     notes = [];
@@ -194,6 +196,7 @@ export function preview(doc, documents, trail = []) {
       name: 'profile.json'
     };
     const target = resolveImport(body, importDirective.href, source, documents);
+    if (!['catalog', 'profile'].includes(model(target.doc).type)) throw Error('Profile import must reference a catalogue or profile.');
     const imported = preview(target.doc, documents, [...trail, doc]);
     sources.push(...imported.sources);
     notes.push(...imported.notes);

@@ -53,7 +53,7 @@ export function resolveImport(body, href, source, documents) {
     if (candidates.length === 1) return candidates[0];
   }
   throw Error('Missing JSON import: ' + references.join(' or ') +
-    '. Open the common parent folder containing the profile and its sources, or select the source JSON file separately.'
+    '. Open the common parent folder containing the document and its sources, or select the source JSON file separately.'
   );
 }
 
@@ -74,13 +74,13 @@ export async function readDocuments(files, existing, {
     try {
       if (file.size > 20 * 1024 * 1024) throw Error('File exceeds the 20 MB limit.');
       const doc = JSON.parse(await file.text());
-      const types = ['catalog', 'profile', 'mapping-collection'].filter(k => doc && typeof doc === 'object' && doc[k]);
+      const types = ['catalog', 'profile', 'mapping-collection', 'system-security-plan', 'component-definition'].filter(k => doc && typeof doc === 'object' && doc[k]);
       if (!types.length && folder) {
         skipped++;
         continue;
       }
       if (types.length !== 1 || typeof doc[types[0]] !== 'object' || Array.isArray(doc[types[0]]))
-        throw Error('Expected one catalogue, profile or mapping collection object.');
+        throw Error('Expected one catalogue, profile, mapping collection, system security plan or component definition object.');
       const entry = {
         name: file.name,
         path,

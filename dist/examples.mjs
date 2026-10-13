@@ -170,9 +170,9 @@ export const exampleSSP = {'system-security-plan': {
   ]},
   'control-implementation': {description: 'Example control implementation.', 'implemented-requirements': [{
     uuid: '1b77cd32-51ee-405e-a298-163d641519a4', 'control-id': 'ac-1',
-    'by-components': [{uuid: '1b77cd32-51ee-405e-a298-163d641519a5', 'component-uuid': gatewayId, description: 'The gateway enforces the approved access policy.'}],
+    'by-components': [{uuid: '1b77cd32-51ee-405e-a298-163d641519a5', 'component-uuid': gatewayId, description: 'The gateway enforces the approved access policy.', 'implementation-status': {state: 'implemented'}}],
     statements: [{'statement-id': 'ac-1_smt', uuid: '1b77cd32-51ee-405e-a298-163d641519a6',
-      'by-components': [{uuid: '1b77cd32-51ee-405e-a298-163d641519a7', 'component-uuid': gatewayId, description: 'Gateway policy review follows the inherited profile frequency.'}]}]
+      'by-components': [{uuid: '1b77cd32-51ee-405e-a298-163d641519a7', 'component-uuid': gatewayId, description: 'Gateway policy review follows the inherited profile frequency.', 'implementation-status': {state: 'partial', remarks: 'Review automation is being rolled out.'}}]}]
   }]}
 }};
 export const exampleComponentDefinition = {'component-definition': {
@@ -182,3 +182,49 @@ export const exampleComponentDefinition = {'component-definition': {
       'implemented-requirements': [{uuid: '2b77cd32-51ee-405e-a298-163d641519a2', 'control-id': 'ac-1', description: 'Provides configurable access policy enforcement.'}]}]
   }]
 }};
+
+/** A complete demo with every SSP status and two contributing components. */
+export function implementationExampleWorkspace() {
+  const catalog = structuredClone(exampleCatalog), profile = structuredClone(exampleProfile);
+  const ssp = structuredClone(exampleSSP), definition = structuredClone(exampleComponentDefinition);
+  const providerId = '3b77cd32-51ee-405e-a298-163d641519a1';
+  const uuid = number => `4b77cd32-51ee-405e-a298-${String(number).padStart(12, '0')}`;
+  const contribution = (number, component, state, description) => ({
+    uuid: uuid(number), 'component-uuid': component, description,
+    'implementation-status': {state}
+  });
+  catalog.catalog.groups[0].controls ||= [];
+  catalog.catalog.groups[0].controls.push(
+    control('ac-4', 'Information flow enforcement', 'Enforce approved information flow policies.')
+  );
+  profile.profile.imports[0]['include-controls'][0]['with-ids'].push('ac-3', 'ac-4');
+  const system = ssp['system-security-plan'];
+  system.metadata.title = 'Example SSP — implementation statuses';
+  system['system-implementation'].components.push({uuid: providerId, type: 'service', title: 'Shared identity provider',
+    description: 'Provides inherited identity and audit capabilities.', status: {state: 'operational'}});
+  const requirements = system['control-implementation']['implemented-requirements'];
+  requirements[0].statements[0]['by-components'].push(contribution(1, providerId, 'inherited', 'Policy enforcement is inherited from the shared identity provider.'));
+  requirements.push(
+    {uuid: uuid(2), 'control-id': 'ac-2', 'by-components': [
+      contribution(3, gatewayId, 'implemented', 'Local account approvals and removal are fully implemented.'),
+      contribution(4, providerId, 'inherited', 'Account lifecycle automation is inherited from the identity provider.')]},
+    {uuid: uuid(5), 'control-id': 'ac-2.1', 'by-components': [
+      contribution(6, gatewayId, 'planned', 'Automated account reconciliation is planned for the next release.')]},
+    {uuid: uuid(7), 'control-id': 'au-2', 'by-components': [
+      contribution(8, providerId, 'inherited', 'All event logging for this service is inherited from the identity provider.')]},
+    {uuid: uuid(9), 'control-id': 'ac-3', 'by-components': [
+      contribution(10, gatewayId, 'not-applicable', 'This illustrative requirement is outside the example system boundary.')]}
+  );
+  const components = definition['component-definition'].components;
+  const implementation = components[0]['control-implementations'][0];
+  implementation['implemented-requirements'].push({uuid: uuid(11), 'control-id': 'ac-2', description: 'Provides configurable account lifecycle enforcement.'});
+  components.push({uuid: providerId, type: 'service', title: 'Shared identity provider', description: 'Reusable identity and audit services.',
+    'control-implementations': [{uuid: uuid(12), source: 'example-profile.json', description: 'Capabilities offered to consuming systems.',
+      'implemented-requirements': [{uuid: uuid(13), 'control-id': 'au-2', description: 'Provides central event logging to consuming systems.'}]}]});
+  return [
+    {name: 'example-profile.json', doc: profile}, {name: 'example-catalog.json', doc: catalog},
+    {name: 'example-assurance.json', doc: structuredClone(exampleMappedCatalog)},
+    {name: 'example-mapping.json', doc: structuredClone(exampleMapping)},
+    {name: 'example-ssp.json', doc: ssp}, {name: 'example-component.json', doc: definition}
+  ];
+}

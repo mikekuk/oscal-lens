@@ -1,3 +1,4 @@
+import { statusLabels, declaredStatus, nodeStatus, controlStatus, scopeImplementation } from './implementation-status.mjs';
 import { same, originalPart, parameterChanged, removedContent } from './provenance.mjs';
 import { itemLabel, locateItem } from './mappings.mjs';
 import {
@@ -272,18 +273,20 @@ function renderControl(row, index, visibility, includeMappings = true) {
   const metadata = visibility.metadata ? renderFields(omitFields(control, ['id', 'title', 'parts', 'params',
     'controls'
   ]), row.baseControl, !!row.baseControl) : '';
-  return `<details class="control" ${index === 0 ? 'open' : ''}>
-    <summary><span class="id">${escapeHtml(control.id)}</span><strong>${changedText(escapeHtml(control.title), !!row.baseControl && control.title !== row.baseControl.title)}</strong>
+  const status = row.sspStatus ? controlStatus(row, row.selectedComponent) : null;
+  return `<details class="control${status ? ' ssp-status ssp-status-' + status : ''}" ${index === 0 ? 'open' : ''}>
+    <summary><span class="id">${escapeHtml(control.id)}</span><strong>${changedText(escapeHtml(control.title), !!row.baseControl && control.title !== row.baseControl.title)}</strong>${statusBadge(status)}
       <span class="crumb">${escapeHtml(breadcrumb)}${source}</span>
     </summary>
     <div class="detail">${renderImplementation(row)}${renderParts(control.parts, row.parameters, visibility, row)}${parameters}${metadata}${renderProfileChanges(row)}${includeMappings && visibility.mappings !== false ? renderMappings(row.mappings, visibility) : ''}</div>
   </details>`;
 }
 
-export function renderControls(type, result, problem, errorCount, selectedGroup, query, visibility = {}) {
+export function renderControls(type, result, problem, errorCount, selectedGroup, query, visibility = {}, selectedStatus = '') {
   const rows = result.rows.filter(row => {
     const inGroup = !selectedGroup || (result.components ? row.componentIds?.includes(selectedGroup) : row.groups.some(group => (group.id || group.title) === selectedGroup));
-    return inGroup && substituteParameters(JSON.stringify([row.control, row.implementations, result.components?.filter(component => row.componentIds?.includes(component.id))]), row.parameters).toLowerCase()
+    const inStatus = type !== 'system-security-plan' || !selectedStatus || controlStatus(row, selectedGroup) === selectedStatus;
+    return inGroup && inStatus && substituteParameters(JSON.stringify([row.control, row.implementations, result.components?.filter(component => row.componentIds?.includes(component.id))]), row.parameters).toLowerCase()
       .includes(query);
   });
   const previewNotice = type === 'profile' ? renderNotice(
@@ -293,9 +296,15 @@ export function renderControls(type, result, problem, errorCount, selectedGroup,
     'This document has validation errors. Displayed content is for inspection only.', true) : '';
   const emptyMessage = problem ? 'Load the missing source files to see the controls.' :
     'No controls match this view.';
-  const controls = rows.length ? rows.map((row, index) => renderControl({...row, selectedComponent: result.components ? selectedGroup : undefined, componentDefinitions: result.components}, index, visibility)).join('') :
-    `<div class="empty">${emptyMessage}</div>`;
-  return `${previewNotice}${type === 'profile' ? '<p class="profile-legend"><span class="profile-change">Dotted underline</span> = added or changed by a profile layer. Other text comes from the catalogue.</p>' : ''}${invalidNotice}<p class="odp-legend"><span class="odp odp-filled">Filled</span> explicit value · <span class="odp odp-constrained">Constrained</span> restriction or selection, not assigned · <span class="odp odp-open">Open</span> organisation-defined. Parameter details are available using the Parameters toggle.</p>${renderProcessingNotes(result, problem)}
+  let controlIndex = 0;
+  const renderRow = row => renderControl({...row, selectedComponent: result.components ? selectedGroup : undefined,
+    componentDefinitions: result.components, sspStatus: type === 'system-security-plan'}, controlIndex++, visibility);
+  const controls = !rows.length ? `<div class="empty">${emptyMessage}</div>` : type === 'system-security-plan'
+    ? Object.entries(statusLabels).map(([status, label]) => {
+      const members = rows.filter(row => controlStatus(row, selectedGroup) === status);
+      return members.length ? `<details class="ssp-control-status-group" aria-label="${label} controls"><summary>${statusBadge(status)} <span>${members.length} ${members.length === 1 ? 'control' : 'controls'}</span></summary><div class="status-group-controls">${members.map(renderRow).join('')}</div></details>` : '';
+    }).join('') : rows.map(renderRow).join('');
+  return `${type === 'system-security-plan' ? renderStatusLegend() : ''}${previewNotice}${type === 'profile' ? '<p class="profile-legend"><span class="profile-change">Dotted underline</span> = added or changed by a profile layer. Other text comes from the catalogue.</p>' : ''}${invalidNotice}<p class="odp-legend"><span class="odp odp-filled">Filled</span> explicit value · <span class="odp odp-constrained">Constrained</span> restriction or selection, not assigned · <span class="odp odp-open">Open</span> organisation-defined. Parameter details are available using the Parameters toggle.</p>${renderProcessingNotes(result, problem)}
     <div class="count"><span>${rows.length} ${rows.length === 1 ? 'control' : 'controls'} shown</span>
       <span>${result.components ? (selectedGroup ? 'Filtered by component' : 'All components') : (selectedGroup ? 'Filtered by group' : 'All groups')}</span>
     </div>${renderComponentDetails(result, selectedGroup)}${controls}`;
@@ -309,18 +318,26 @@ export function renderComponentDetails(result, selected = '') {
   ).join('');
 }
 
+export function renderStatusFilter(selected = '') {
+  return `<label class="search-label" for="implementation-status-filter">Implementation status</label><select id="implementation-status-filter"><option value="">All statuses</option>${Object.entries(statusLabels).map(([status,label]) => `<option value="${status}"${selected === status ? ' selected' : ''}>${label}</option>`).join('')}</select>`;
+}
+
+function statusBadge(status) {
+  return status ? `<span class="ssp-status-badge ssp-status-${status}">${statusLabels[status]}</span>` : '';
+}
+
+function renderStatusLegend() {
+  return `<div class="ssp-status-legend" aria-label="SSP implementation status colours">${Object.keys(statusLabels).map(statusBadge).join('')}<p>Colours combine the visible implementation sections. All planned = planned; mixed planned or partial = partial. All applicable sections inherited = inherited. Implemented, inherited and N/A together = implemented.</p></div>`;
+}
+
 function renderImplementation(row) {
   if (!row.implementations) return '';
   const records = row.implementations.filter(item => !row.selectedComponent || item.componentIds.includes(row.selectedComponent));
   if (!records.length) return renderNotice('No implementation recorded for this control.');
   return `<section class="control-section"><h4>Implementation</h4>${records.map(item => {
-    let body = item.body;
-    if (row.selectedComponent) {
-      const keep = values => (values || []).filter(value => value['component-uuid'] === row.selectedComponent);
-      body = {...body};
-      if (body['by-components']) body['by-components'] = keep(body['by-components']);
-      if (body.statements) body.statements = body.statements.filter(statement => !statement['by-components'] || keep(statement['by-components']).length).map(statement => statement['by-components'] ? {...statement, 'by-components': keep(statement['by-components'])} : statement);
-    }
+    const body = scopeImplementation(item.body, row.selectedComponent);
+    const status = row.sspStatus ? nodeStatus(body) : null;
+    const ownStatus = declaredStatus(body);
     const names = item.componentIds.filter(id => !row.selectedComponent || id === row.selectedComponent).map(id => row.componentDefinitions?.find(component => component.id === id)?.title || id);
     const scope = (parent, settings = []) => {
       const result = {...parent};
@@ -328,16 +345,21 @@ function renderImplementation(row) {
       return result;
     };
     const parameters = scope(scope(row.parameters, item.settings), body['set-parameters']);
-    const narrative = (value, parent) => {
+    const narrative = (value, parent, fallbackStatus = 'unspecified') => {
+      const ownStatus = declaredStatus(value, fallbackStatus);
       const local = scope(parent, value['set-parameters']);
       return (value.description ? `<p>${renderProse(value.description, local)}</p>` : '') +
         (value['by-components'] || []).map(contribution => {
           const name = row.componentDefinitions?.find(component => component.id === contribution['component-uuid'])?.title || contribution['component-uuid'];
-          return `<div class="part"><strong>${escapeHtml(name)}</strong>${narrative(contribution, local)}</div>`;
+          const status = row.sspStatus ? nodeStatus(contribution, ownStatus) : null;
+          return `<div class="part${status ? ' ssp-status ssp-status-' + status : ''}"><strong>${escapeHtml(name)}</strong>${statusBadge(status)}${narrative(contribution, local, ownStatus)}</div>`;
         }).join('');
     };
-    const statements = (body.statements || []).map(statement => `<div class="part"><strong>Statement ${escapeHtml(statement['statement-id'])}</strong>${narrative(statement, parameters)}</div>`).join('');
-    return `<div class="matter-block"><h5>${escapeHtml(names.join(' / ') || 'System-wide implementation')}</h5>${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}${narrative(body, parameters)}${statements}<details><summary>Implementation details</summary>${renderFields({...(item.title ? {title: item.title} : {}), ...(item.source ? {source: item.source} : {}), ...(item.settings ? {'implementation-set-parameters': item.settings} : {}), ...body})}</details></div>`;
+    const statements = (body.statements || []).map(statement => {
+      const status = row.sspStatus ? nodeStatus(statement, ownStatus) : null;
+      return `<div class="part${status ? ' ssp-status ssp-status-' + status : ''}"><strong>Statement ${escapeHtml(statement['statement-id'])}</strong>${statusBadge(status)}${narrative(statement, parameters, ownStatus)}</div>`;
+    }).join('');
+    return `<div class="matter-block${status ? ' ssp-status ssp-status-' + status : ''}"><h5>${escapeHtml(names.join(' / ') || 'System-wide implementation')}${statusBadge(status)}</h5>${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}${narrative(body, parameters)}${statements}<details><summary>Implementation details</summary>${renderFields({...(item.title ? {title: item.title} : {}), ...(item.source ? {source: item.source} : {}), ...(item.settings ? {'implementation-set-parameters': item.settings} : {}), ...body})}</details></div>`;
   }).join('')}</section>`;
 }
 

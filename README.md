@@ -195,3 +195,28 @@ Open `system-security-plan` and `component-definition` JSON files alongside thei
 - **Grey matter**, **Validation** and **Source** retain supporting document content and original JSON. Validation uses the exact bundled NIST schema for the declared version.
 
 This is an implementation inspection preview, not an SSP or component-definition resolver. It does not merge SSP components with separately loaded definitions by UUID, infer implementation from inventory alone, reconcile duplicate imported component definitions, or assess satisfaction of controls. Implementation metadata (including status, responsibilities, provided/inherited responsibilities and inventory) remains available in details and source views. If multiple component-definition sources contain the same control ID, graph endpoints remain subject to the existing ambiguity checks.
+
+## SSP implementation status colours
+
+SSP control headers, expanded statements and component contributions show a colour and a text status label. Selecting a component recalculates the control rollup using only its visible contributions.
+
+| Sections in the current view | Control colour |
+| --- | --- |
+| All N/A | Grey — N/A |
+| All applicable sections inherited (N/A ignored) | Blue — Inherited |
+| All implemented, inherited or N/A, with some implemented locally | Green — Implemented |
+| All applicable sections planned | Red — Planned |
+| Any partial, or planned mixed with other statuses | Amber — Partial |
+| Missing/unsupported status prevents a completed rollup | Neutral — Status not specified |
+
+Statuses come from OSCAL `implementation-status.state`, with `implementation-status` properties supported at requirement/statement/component level in the OSCAL or FedRAMP namespace (or without a namespace). Native status takes precedence over properties. An explicit status supplies the default for descendants lacking their own declaration; section/contribution statuses determine the rollup rather than an aggregate parent claim. Unsupported states such as `alternative` remain unspecified and are preserved in Implementation details.
+
+Full inheritance is indicated by an explicit `inherited` state or `control-origination=inherited` property. The latter qualifies implemented contributions but never overrides partial, planned or N/A states. An inherited responsibility alone can coexist with local responsibilities, so it does not prove full inheritance. Profile mapping ancestry and component operational status do not affect these colours. This is a summary of recorded implementation sections, not a compliance or completeness assessment against every possible catalogue statement.
+
+### Filtering and Implementation Summary
+
+Selecting an SSP adds an **Implementation status** filter to the Controls view. It combines with the component and text filters. The SSP Controls list is grouped under expandable status headings; each control appears once under its combined status, and selecting a component recalculates its group. **Implementation Summary** shows a pie chart and a list of controls grouped by status, including a neutral category for missing statuses. Text labels, counts and percentages accompany the colours. The Controls view and summary both use expandable status groups, initially collapsed, with counts visible in each heading.
+
+The summary starts with all components selected and includes baseline controls without implementation records. Its component checkboxes are independent of the Controls view filters. Selecting a subset recalculates each participating control from just those components' contributions; each control is counted once. Clearing the component selection shows an empty summary. Selection is retained per SSP while moving between tabs.
+
+Use **SSP / component example** for a complete sample workspace containing an SSP, a component definition, their profile/catalogue sources and mappings. The example SSP covers all five colours plus unspecified status, with local and inherited contributions and a defined component that has no implementation. The sample component definition describes both the gateway and a shared identity provider.
